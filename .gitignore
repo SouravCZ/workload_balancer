@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Scratch artifacts from design-to-JSX extraction
+scratch/
+scratch_html.html
+extract_jsx.py
+patch_index.py
+test.txt
