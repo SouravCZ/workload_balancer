@@ -1,1 +1,124 @@
-/* Cleared to let CDN tailwind handle styling */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #faf9f6;
+  font-family: "Ranade", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+}
+.icon-fill {
+  font-variation-settings: "FILL" 1;
+}
+
+/* Level 1 card: white fill, 1px hairline, diffused ambient shadow */
+.hero-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(9, 30, 66, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(9, 30, 66, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.card-border {
+  border: 1px solid #e4e7ec;
+}
+.soft-shadow {
+  box-shadow: 0px 2px 4px rgba(16, 24, 40, 0.05);
+}
+.lift-shadow {
+  box-shadow: 0px 12px 16px rgba(16, 24, 40, 0.1);
+}
+.card-shadow {
+  box-shadow: 0px 2px 4px rgba(16, 24, 40, 0.05);
+}
+.card-hover-shadow {
+  box-shadow: 0px 8px 16px rgba(16, 24, 40, 0.08);
+}
+.task-card-bg {
+  background-image: linear-gradient(160deg, #f4f3f0 0%, #efeeeb 100%);
+}
+
+/* Skill heatmap ramp: 1 novice -> 5 expert */
+.heatmap-1 {
+  background-color: #f4f3f0;
+  color: #50685d;
+}
+.heatmap-2 {
+  background-color: #d3e7dc;
+  color: #384b42;
+}
+.heatmap-3 {
+  background-color: #b3ccc0;
+  color: #091f18;
+}
+.heatmap-4 {
+  background-color: #6b8a7c;
+  color: #ffffff;
+}
+.heatmap-5 {
+  background-color: #31433b;
+  color: #ffffff;
+}
+
+/* Utilisation fill for healthy range */
+.utilization-bar-fill {
+  background-image: linear-gradient(90deg, #31433b, #4c6359);
+}
+
+/* Diagonal stripes marking allocation beyond 100% of capacity */
+.overflow-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.4) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c2c8c3;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8b0ab;
+}
+
+/* Dialog enter: backdrop fade + panel rise */
+@keyframes eqFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes eqPop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

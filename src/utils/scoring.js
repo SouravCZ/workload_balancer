@@ -1,33 +1,48 @@
-const MAX_PROFICIENCY = 5;
+export const MAX_PROFICIENCY = 5;
+export const SKILL_WEIGHT = 0.6;
+export const AVAILABILITY_WEIGHT = 0.4;
+
+export const OVERLOADED_THRESHOLD = 1.0;
+export const UNDERUTILIZED_THRESHOLD = 0.5;
+
+export const BURNOUT_HIGH_OVERAGE = 0.3;
+
+export const RISK_OVERAGE_MULTIPLIER = 180;
+export const RISK_STREAK_MULTIPLIER = 12;
+export const RISK_HIGH_TIER_SCORE = 60;
+export const RISK_MEDIUM_TIER_SCORE = 30;
+
+export const MIN_PROPOSAL_FIT = 0.45;
+export const STREAK_LOAD_PCT = 100;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function calculateFitScore(member, task) {
   let skillOverlapRaw = 0;
-  for (const reqSkill of task.requiredSkills) {
-    const memberSkill = member.skills.find((s) => s.skill === reqSkill);
+  for (const reqSkill of task.requiredSkills ?? []) {
+    const memberSkill = (member.skills ?? []).find((s) => s.skill === reqSkill);
     if (memberSkill) {
       skillOverlapRaw += memberSkill.proficiency;
     }
   }
-  const maxPossible = task.requiredSkills.length * MAX_PROFICIENCY;
+  const maxPossible = (task.requiredSkills?.length ?? 0) * MAX_PROFICIENCY;
   let skillOverlap = maxPossible > 0 ? skillOverlapRaw / maxPossible : 0;
   skillOverlap = clamp(skillOverlap, 0, 1);
 
-  let availabilityScore = 1 - member.currentAllocatedHours / member.capacityHours;
+  let availabilityScore = member.capacityHours > 0 ? 1 - member.currentAllocatedHours / member.capacityHours : 0;
   availabilityScore = clamp(availabilityScore, 0, 1);
 
-  const fitScore = 0.6 * skillOverlap + 0.4 * availabilityScore;
+  const fitScore = SKILL_WEIGHT * skillOverlap + AVAILABILITY_WEIGHT * availabilityScore;
 
   return { fitScore, skillOverlap, availabilityScore };
 }
 
 export function calculateWorkloadUtilization(member) {
-  const utilization = member.currentAllocatedHours / member.capacityHours;
+  const utilization = member.capacityHours > 0 ? member.currentAllocatedHours / member.capacityHours : 0;
   let status = "healthy";
-  if (utilization > 1.0) {
+  if (utilization > OVERLOADED_THRESHOLD) {
     status = "overloaded";
-  } else if (utilization < 0.5) {
+  } else if (utilization < UNDERUTILIZED_THRESHOLD) {
     status = "underutilized";
   }
   return { utilization, status };
@@ -36,27 +51,22 @@ export function calculateWorkloadUtilization(member) {
 export function calculateBurnoutRisk(member) {
   const { utilization } = calculateWorkloadUtilization(member);
   const overage = Math.max(0, utilization - 1);
-  let riskTier = "Low";
-  if (overage > 0.3) {
-    riskTier = "High";
-  } else if (overage > 0) {
-    riskTier = "Medium";
-  }
-  return { overage, riskTier };
+  const { score, tier, streakWeeks } = calculateRiskScore(member);
+  return { overage, riskTier: tier, score, streakWeeks };
 }
 
 /** 0-100 burnout score blending capacity overage with consecutive over-capacity weeks. */
 export function calculateRiskScore(member) {
   const { utilization } = calculateWorkloadUtilization(member);
   const overage = Math.max(0, utilization - 1);
-  const streakWeeks = (member.weeklyLoad ?? []).filter((load) => load > 100).length;
-  const score = clamp(Math.round(overage * 180 + streakWeeks * 12), 0, 100);
-  const tier = score >= 60 ? "High" : score >= 30 ? "Medium" : "Low";
+  const streakWeeks = (member.weeklyLoad ?? []).filter((load) => load > STREAK_LOAD_PCT).length;
+  const score = clamp(Math.round(overage * RISK_OVERAGE_MULTIPLIER + streakWeeks * RISK_STREAK_MULTIPLIER), 0, 100);
+  const tier = score >= RISK_HIGH_TIER_SCORE ? "High" : score >= RISK_MEDIUM_TIER_SCORE ? "Medium" : "Low";
   return { score, tier, streakWeeks };
 }
 
 export function proficiencyOf(member, skill) {
-  return member.skills.find((s) => s.skill === skill)?.proficiency ?? 0;
+  return (member.skills ?? []).find((s) => s.skill === skill)?.proficiency ?? 0;
 }
 
 /** Members ranked as best candidates for a task, highest fit score first. */
@@ -67,7 +77,7 @@ export function rankCandidates(task, members) {
 }
 
 export function skillCoverage(members) {
-  const skills = [...new Set(members.flatMap((m) => m.skills.map((s) => s.skill)))];
+  const skills = [...new Set(members.flatMap((m) => (m.skills ?? []).map((s) => s.skill)))];
   return skills
     .map((skill) => {
       const holders = members
@@ -131,34 +141,103 @@ export function teamMetrics(members, tasks) {
   };
 }
 
-/** Transfer proposals that move hours from overloaded members to underutilized ones. */
+/** Transfer and assignment proposals that balance team workload. */
 export function rebalanceProposals(members, tasks) {
-  const donors = members
-    .map((m) => ({ member: m, ...calculateWorkloadUtilization(m) }))
-    .filter((d) => d.utilization > 0.9);
-  const receivers = members
-    .map((m) => ({ member: m, ...calculateWorkloadUtilization(m) }))
-    .filter((r) => r.utilization < 0.6);
-
   const proposals = [];
-  for (const task of tasks.filter((t) => t.assignedMemberId)) {
-    if (donors.length === 0 || receivers.length === 0) break;
-    const from = donors[0].member;
-    const ranked = rankCandidates(
-      task,
-      receivers.map((r) => r.member),
-    );
+  if (!members || members.length === 0 || !tasks || tasks.length === 0) {
+    return proposals;
+  }
+
+  // Track projected hours dynamically
+  const memberLoads = new Map(
+    members.map((m) => [
+      m.id,
+      {
+        member: m,
+        projectedHours: m.currentAllocatedHours,
+        capacity: m.capacityHours,
+      },
+    ]),
+  );
+
+  const getUtil = (id) => {
+    const rec = memberLoads.get(id);
+    return rec && rec.capacity > 0 ? rec.projectedHours / rec.capacity : 0;
+  };
+
+  // a) First assign unassigned tasks to the best-fit receivers as "assign" proposals, up to 3.
+  const unassignedTasks = tasks.filter((t) => !t.assignedMemberId);
+  let assignCount = 0;
+
+  for (const task of unassignedTasks) {
+    if (assignCount >= 3) break;
+    const receivers = members.filter((m) => getUtil(m.id) < UNDERUTILIZED_THRESHOLD);
+    if (receivers.length === 0) break;
+
+    const ranked = rankCandidates(task, receivers);
     const best = ranked[0];
-    if (!best || best.fitScore < 0.45) continue;
+    if (!best || best.fitScore < MIN_PROPOSAL_FIT) continue;
+
+    const recLoad = memberLoads.get(best.member.id);
+    if ((recLoad.projectedHours + task.estimatedHours) / recLoad.capacity > OVERLOADED_THRESHOLD) {
+      continue;
+    }
+
+    recLoad.projectedHours += task.estimatedHours;
+    assignCount++;
     proposals.push({
       id: `p-${task.id}`,
+      type: "assign",
       task,
-      from,
+      from: null,
       to: best.member,
       fitScore: best.fitScore,
       hours: task.estimatedHours,
     });
-    if (proposals.length >= 3) break;
   }
+
+  // b) Then, for each overloaded donor, move tasks only until the donor is at or below 100%
+  // (stop once the donor is at or below the threshold; never overshoot to below the underutilized threshold).
+  const overloadedDonors = members
+    .filter((m) => getUtil(m.id) > OVERLOADED_THRESHOLD)
+    .sort((a, b) => getUtil(b.id) - getUtil(a.id));
+
+  for (const donor of overloadedDonors) {
+    const dLoad = memberLoads.get(donor.id);
+    const donorTasks = tasks.filter((t) => t.assignedMemberId === donor.id);
+
+    for (const task of donorTasks) {
+      if (getUtil(donor.id) <= OVERLOADED_THRESHOLD) break;
+
+      const projectedAfterRemoval = (dLoad.projectedHours - task.estimatedHours) / dLoad.capacity;
+      if (projectedAfterRemoval < UNDERUTILIZED_THRESHOLD) continue;
+
+      const receivers = members.filter((m) => getUtil(m.id) < UNDERUTILIZED_THRESHOLD);
+      if (receivers.length === 0) break;
+
+      const ranked = rankCandidates(task, receivers);
+      const best = ranked[0];
+      if (!best || best.fitScore < MIN_PROPOSAL_FIT) continue;
+
+      const recLoad = memberLoads.get(best.member.id);
+      if ((recLoad.projectedHours + task.estimatedHours) / recLoad.capacity > OVERLOADED_THRESHOLD) {
+        continue;
+      }
+
+      dLoad.projectedHours -= task.estimatedHours;
+      recLoad.projectedHours += task.estimatedHours;
+
+      proposals.push({
+        id: `p-${task.id}`,
+        type: "transfer",
+        task,
+        from: donor,
+        to: best.member,
+        fitScore: best.fitScore,
+        hours: task.estimatedHours,
+      });
+    }
+  }
+
   return proposals;
 }

@@ -16,6 +16,8 @@ const navItems = [
   { to: "/skill-matrix", label: "Skill Matrix", icon: "psychology" },
   { to: "/burnout-risk", label: "Burnout Risk", icon: "psychiatry" },
   { to: "/insights", label: "Insights", icon: "insights" },
+  { to: "/reports", label: "Reports", icon: "assessment" },
+  { to: "/about", label: "About", icon: "info" },
 ];
 
 export default function Sidebar({ highRiskCount = 0 }) {
@@ -140,13 +142,11 @@ export default function Sidebar({ highRiskCount = 0 }) {
                   {reasoning.overloaded.map(({ member, utilization }) => (
                     <li
                       key={member.id}
-                      className="flex items-center justify-between gap-md p-sm border border-outline-variant rounded-md"
+                      className="flex items-center justify-between text-body-sm bg-surface-container-low px-sm py-xs rounded border border-outline-variant"
                     >
-                      <span className="font-body-sm text-body-sm text-on-surface truncate">
-                        {member.name}
-                      </span>
-                      <span className="font-label-md text-label-md text-error flex-shrink-0">
-                        {Math.round(utilization * 100)}%
+                      <span className="font-medium">{member.name}</span>
+                      <span className="font-label-md text-error">
+                        {Math.round(utilization * 100)}% capacity
                       </span>
                     </li>
                   ))}
@@ -157,21 +157,19 @@ export default function Sidebar({ highRiskCount = 0 }) {
             {reasoning.transfers.length > 0 ? (
               <section>
                 <h3 className="font-label-md text-label-md text-primary mb-sm">
-                  Suggested transfers
+                  Rebalance opportunities
                 </h3>
                 <ul className="flex flex-col gap-sm">
-                  {reasoning.transfers.map((proposal) => (
+                  {reasoning.transfers.map((p) => (
                     <li
-                      key={proposal.id}
-                      className="flex items-center justify-between gap-md p-sm border border-outline-variant rounded-md"
+                      key={p.id}
+                      className="text-body-sm bg-surface-container-low p-sm rounded border border-outline-variant"
                     >
-                      <span className="font-body-sm text-body-sm text-on-surface truncate">
-                        {proposal.task.title}
-                      </span>
-                      <span className="font-label-md text-label-md text-secondary flex-shrink-0">
-                        {proposal.from.name.split(" ")[0]} → {proposal.to.name.split(" ")[0]} ·{" "}
-                        {Math.round(proposal.fitScore * 100)}%
-                      </span>
+                      <div className="font-medium text-primary">{p.task.title}</div>
+                      <div className="text-secondary text-[12px] mt-xs">
+                        {p.from ? `Move ${p.hours}h from ${p.from.name}` : `Assign ${p.hours}h`} &rarr; {p.to.name} (fit:{" "}
+                        {Math.round(p.fitScore * 100)}%)
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -180,20 +178,23 @@ export default function Sidebar({ highRiskCount = 0 }) {
 
             {reasoning.openWork.length > 0 ? (
               <section>
-                <h3 className="font-label-md text-label-md text-secondary mb-sm">
-                  Best owner per unassigned task
+                <h3 className="font-label-md text-label-md text-on-surface-variant mb-sm">
+                  Unassigned work
                 </h3>
                 <ul className="flex flex-col gap-sm">
                   {reasoning.openWork.map(({ task, member, fitScore }) => (
                     <li
                       key={task.id}
-                      className="flex items-center justify-between gap-md p-sm border border-outline-variant rounded-md"
+                      className="flex items-center justify-between text-body-sm bg-surface-container-low px-sm py-xs rounded border border-outline-variant"
                     >
-                      <span className="font-body-sm text-body-sm text-on-surface truncate">
-                        {task.title}
-                      </span>
-                      <span className="font-label-md text-label-md text-secondary flex-shrink-0">
-                        {member.name.split(" ")[0]} · {Math.round(fitScore * 100)}%
+                      <div>
+                        <div className="font-medium">{task.title}</div>
+                        <div className="text-secondary text-[12px]">
+                          Best candidate: {member.name} ({Math.round(fitScore * 100)}%)
+                        </div>
+                      </div>
+                      <span className="font-label-md text-secondary">
+                        {task.estimatedHours}h
                       </span>
                     </li>
                   ))}
@@ -206,4 +207,3 @@ export default function Sidebar({ highRiskCount = 0 }) {
     </nav>
   );
 }
-

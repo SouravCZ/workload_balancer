@@ -699,8 +699,8 @@ export default function TeamMembers() {
                 </div>
                 <div className="flex items-center gap-sm flex-wrap text-body-sm text-body-sm text-secondary">
                   <span className="flex items-center gap-1.5">
-                    <Icon name="arrow_upward" className="text-[14px] text-error" />
-                    {proposal.from.name}
+                    <Icon name={proposal.from ? "arrow_upward" : "assignment"} className={`text-[14px] ${proposal.from ? "text-error" : "text-primary"}`} />
+                    {proposal.from ? proposal.from.name : "Unassigned Backlog"}
                   </span>
                   <Icon name="arrow_forward" className="text-[14px]" />
                   <span className="flex items-center gap-1.5">

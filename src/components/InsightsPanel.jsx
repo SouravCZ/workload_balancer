@@ -42,7 +42,11 @@ export default function InsightsPanel({ proposal, riskRow, suggestions, teamRisk
                 Capacity headroom of{" "}
                 {proposal.to.capacityHours - proposal.to.currentAllocatedHours}h this sprint
               </ReasonRow>
-              <ReasonRow>Reduces donor load by {proposal.hours}h</ReasonRow>
+              <ReasonRow>
+                {proposal.type === "assign" || !proposal.from
+                  ? `Directly allocates unassigned ${proposal.hours}h backlog work`
+                  : `Reduces donor load by ${proposal.hours}h`}
+              </ReasonRow>
             </ul>
           </>
         ) : (
@@ -158,9 +162,15 @@ export default function InsightsPanel({ proposal, riskRow, suggestions, teamRisk
               ) : null}
               {proposal ? (
                 <ReasonRow>
-                  Moving {proposal.hours}h from {proposal.from.name} leaves them{" "}
-                  {Math.round((proposal.from.currentAllocatedHours / proposal.from.capacityHours) * 100)}%
-                  utilised.
+                  {proposal.from ? (
+                    <>
+                      Moving {proposal.hours}h from {proposal.from.name} leaves them{" "}
+                      {Math.round((proposal.from.currentAllocatedHours / proposal.from.capacityHours) * 100)}%
+                      utilised.
+                    </>
+                  ) : (
+                    <>Assigns {proposal.hours}h of open backlog work to active sprint.</>
+                  )}
                 </ReasonRow>
               ) : null}
               {riskRow ? (

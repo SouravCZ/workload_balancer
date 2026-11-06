@@ -12,6 +12,14 @@ function cellTone(level) {
   return "heatmap-5 font-bold";
 }
 
+const groupBoundaryIndices = new Set(
+  skillColumns.slice(0, -1).reduce((acc, group) => {
+    const prev = acc.length > 0 ? acc[acc.length - 1] : -1;
+    acc.push(prev + group.skills.length);
+    return acc;
+  }, []),
+);
+
 export default function SkillMatrix() {
   const { members, tasks } = useTeamContext();
   const [selectedId, setSelectedId] = useState(members[0]?.id ?? null);
@@ -118,32 +126,34 @@ export default function SkillMatrix() {
           <div className="overflow-x-auto p-lg custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr>
-                  <th className="p-md font-label-md text-label-md text-on-surface-variant border-b border-outline-variant sticky left-0 bg-surface z-10 w-48">
+                <tr className="border-b border-outline-variant/60 bg-surface-container-low/40">
+                  <th
+                    rowSpan={2}
+                    className="p-md font-label-md text-label-md text-primary font-bold border-b border-r border-outline-variant sticky left-0 bg-surface z-20 w-48 min-w-[190px] align-middle"
+                  >
                     Member
                   </th>
                   {skillColumns.map((group, index) => (
                     <th
                       key={group.group}
                       colSpan={group.skills.length}
-                      className={`p-md font-label-md text-label-md text-on-surface-variant border-b border-outline-variant text-center ${
-                        index % 2 === 0 ? "bg-surface" : ""
+                      className={`py-2 px-sm font-label-md text-[11px] uppercase tracking-wider text-secondary font-bold text-center border-b border-outline-variant ${
+                        index < skillColumns.length - 1 ? "border-r border-outline-variant/60" : ""
                       }`}
                     >
                       {group.group}
                     </th>
                   ))}
                 </tr>
-                <tr>
-                  <th className="p-md border-b border-outline-variant sticky left-0 bg-surface z-10" />
+                <tr className="border-b border-outline-variant bg-surface">
                   {allSkills.map((skill, index) => (
                     <th
                       key={skill}
-                      className={`p-sm text-center text-xs text-on-surface-variant border-b border-outline-variant font-medium bg-surface ${
-                        index === 3 || index === 5 ? "border-r" : ""
+                      className={`py-3 px-1 text-center text-xs font-label-md font-semibold text-primary min-w-[85px] max-w-[110px] align-bottom ${
+                        groupBoundaryIndices.has(index) ? "border-r border-outline-variant/60" : ""
                       }`}
                     >
-                      <div className="-rotate-45 whitespace-nowrap origin-bottom-left ml-4">{skill}</div>
+                      <span className="block leading-tight break-words">{skill}</span>
                     </th>
                   ))}
                 </tr>
@@ -172,7 +182,7 @@ export default function SkillMatrix() {
                       return (
                         <td
                           key={skill}
-                          className={`p-1 ${index === 3 || index === 5 ? "border-r border-outline-variant/50" : ""}`}
+                          className={`p-1 ${groupBoundaryIndices.has(index) ? "border-r border-outline-variant/50" : ""}`}
                         >
                           <div
                             className={`w-full h-8 rounded flex items-center justify-center text-sm relative ${cellTone(level)}`}

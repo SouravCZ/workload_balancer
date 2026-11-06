@@ -10,6 +10,8 @@ import TeamMembers from "./pages/TeamMembers";
 import SkillMatrix from "./pages/SkillMatrix";
 import BurnoutRisk from "./pages/BurnoutRisk";
 import Insights from "./pages/Insights";
+import Reports from "./pages/Reports";
+import About from "./pages/About";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import { calculateRiskScore } from "./utils/scoring";
@@ -32,6 +34,8 @@ function AppLayout({ children, search, onSearch, searchPlaceholder }) {
     "/skill-matrix": "Skill Matrix",
     "/burnout-risk": "Burnout Risk",
     "/insights": "Insights",
+    "/reports": "Reports",
+    "/about": "About",
   };
 
   return (
@@ -122,6 +126,22 @@ export default function App() {
             element={
               <AppLayout>
                 <Insights />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <AppLayout>
+                <Reports />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <AppLayout>
+                <About />
               </AppLayout>
             }
           />

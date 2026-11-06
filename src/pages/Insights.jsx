@@ -53,11 +53,13 @@ export default function Insights() {
 
   const recommendations = proposals.length
     ? proposals.map((proposal, index) => ({
-        title: `Rebalance Load: ${proposal.task.title}`,
-        detail: `Shift ${proposal.hours}h from ${proposal.from.name.split(" ")[0]} to ${
-          proposal.to.name.split(" ")[0]
-        } to prevent a bottleneck (${Math.round(proposal.fitScore * 100)}% fit).`,
-        cta: "Rebalance Load",
+        title: proposal.type === "assign" ? `Assign Task: ${proposal.task.title}` : `Rebalance Load: ${proposal.task.title}`,
+        detail: proposal.type === "assign" || !proposal.from
+          ? `Assign ${proposal.hours}h to ${proposal.to.name.split(" ")[0]} to utilize capacity (${Math.round(proposal.fitScore * 100)}% fit).`
+          : `Shift ${proposal.hours}h from ${proposal.from.name.split(" ")[0]} to ${
+              proposal.to.name.split(" ")[0]
+            } to prevent a bottleneck (${Math.round(proposal.fitScore * 100)}% fit).`,
+        cta: proposal.type === "assign" ? "Assign Task" : "Rebalance Load",
         index,
       }))
     : [
@@ -738,7 +740,7 @@ export default function Insights() {
                     {proposal.task.title}
                   </p>
                   <p className="font-body-sm text-body-sm text-secondary">
-                    {proposal.from.name} → {proposal.to.name} · {proposal.hours}h ·{" "}
+                    {proposal.from ? `${proposal.from.name} → ${proposal.to.name}` : `Unassigned Backlog → ${proposal.to.name}`} · {proposal.hours}h ·{" "}
                     {Math.round(proposal.fitScore * 100)}% fit
                   </p>
                 </div>

@@ -36,8 +36,10 @@ export default function Dashboard() {
   const topRiskRow = [...metrics.rows].sort((a, b) => b.risk.score - a.risk.score)[0];
 
   const suggestions = proposals.slice(0, 3).map((p) => ({
-    title: p.task.priority === "Critical" ? "Reassign Task" : "Rebalance Load",
-    detail: `Move '${p.task.title}' from ${p.from.name.split(" ")[0]}`,
+    title: p.type === "assign" ? "Assign Backlog" : p.task.priority === "Critical" ? "Reassign Task" : "Rebalance Load",
+    detail: p.type === "assign" || !p.from
+      ? `Assign '${p.task.title}' to ${p.to.name.split(" ")[0]}`
+      : `Move '${p.task.title}' from ${p.from.name.split(" ")[0]}`,
     icon: p.fitScore > 0.7 ? "call_split" : "arrow_forward",
   }));
   if (suggestions.length === 0) {
@@ -307,7 +309,13 @@ export default function Dashboard() {
                     className="border border-outline-variant rounded-lg p-md soft-shadow"
                   >
                     <div className="flex items-center gap-sm mb-sm">
-                      <Avatar member={proposal.from} size="sm" />
+                      {proposal.type === "assign" || !proposal.from ? (
+                        <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs" title="Unassigned Backlog">
+                          <Icon name="assignment" className="text-[18px]" />
+                        </div>
+                      ) : (
+                        <Avatar member={proposal.from} size="sm" />
+                      )}
                       <Icon name="arrow_forward" className="text-secondary text-[18px]" />
                       <Avatar member={proposal.to} size="sm" />
                       <span className="ml-auto font-label-md text-label-md text-primary">
@@ -318,7 +326,9 @@ export default function Dashboard() {
                       {proposal.task.title}
                     </p>
                     <p className="font-body-sm text-body-sm text-secondary mb-md">
-                      Move {proposal.hours}h from {proposal.from.name} to {proposal.to.name}.
+                      {proposal.type === "assign" || !proposal.from
+                        ? `Assign ${proposal.hours}h to ${proposal.to.name}.`
+                        : `Move ${proposal.hours}h from ${proposal.from.name} to ${proposal.to.name}.`}
                     </p>
                     <div className="flex gap-sm">
                       <button
@@ -408,46 +418,51 @@ export default function Dashboard() {
         {reviewing ? (
           <>
             <p className="font-body-sm text-body-sm text-secondary">
-              Move {reviewing.hours}h of <strong className="text-on-surface">{reviewing.task.title}</strong>{" "}
-              from {reviewing.from.name} to {reviewing.to.name} at{" "}
+              {reviewing.type === "assign" || !reviewing.from
+                ? `Assign ${reviewing.hours}h of `
+                : `Move ${reviewing.hours}h of `}
+              <strong className="text-on-surface">{reviewing.task.title}</strong>{" "}
+              {reviewing.from ? `from ${reviewing.from.name} ` : ""}to {reviewing.to.name} at{" "}
               {Math.round(reviewing.fitScore * 100)}% fit.
             </p>
 
             <div className="mt-lg flex flex-col gap-md">
-              <div>
-                <div className="flex justify-between items-baseline mb-1.5">
-                  <span className="font-label-md text-label-md text-on-surface">
-                    {reviewing.from.name}
-                  </span>
-                  <span className="font-label-md text-label-md text-primary">
-                    {Math.round(
-                      (reviewing.from.currentAllocatedHours / reviewing.from.capacityHours) * 100,
-                    )}
-                    % → {Math.round(
-                      ((reviewing.from.currentAllocatedHours - reviewing.hours) /
-                        reviewing.from.capacityHours) *
-                        100,
-                    )}
-                    %
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full"
-                    style={{
-                      width: `${Math.max(
-                        0,
-                        Math.min(
+              {reviewing.from ? (
+                <div>
+                  <div className="flex justify-between items-baseline mb-1.5">
+                    <span className="font-label-md text-label-md text-on-surface">
+                      {reviewing.from.name}
+                    </span>
+                    <span className="font-label-md text-label-md text-primary">
+                      {Math.round(
+                        (reviewing.from.currentAllocatedHours / reviewing.from.capacityHours) * 100,
+                      )}
+                      % → {Math.round(
+                        ((reviewing.from.currentAllocatedHours - reviewing.hours) /
+                          reviewing.from.capacityHours) *
                           100,
-                          ((reviewing.from.currentAllocatedHours - reviewing.hours) /
-                            reviewing.from.capacityHours) *
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{
+                        width: `${Math.max(
+                          0,
+                          Math.min(
                             100,
-                        ),
-                      )}%`,
-                    }}
-                  />
+                            ((reviewing.from.currentAllocatedHours - reviewing.hours) /
+                              reviewing.from.capacityHours) *
+                              100,
+                          ),
+                        )}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div>
                 <div className="flex justify-between items-baseline mb-1.5">

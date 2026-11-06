@@ -238,15 +238,14 @@ export default function WorkloadView() {
             >
               {proposals.length === 0
                 ? "Nothing to rebalance"
-                : `Apply ${proposals.length} transfer${proposals.length === 1 ? "" : "s"}`}
+                : `Apply ${proposals.length} proposal${proposals.length === 1 ? "" : "s"}`}
             </Button>
           </ModalActions>
         }
       >
         {proposals.length === 0 ? (
           <p className="font-body-sm text-body-sm text-secondary">
-            Nothing to rebalance. A transfer is only proposed when a member is above 90% utilisation
-            and another has underutilised capacity with at least a 45% fit on the task.
+            Nothing to rebalance. Reassignments are proposed when backlog tasks match underutilized members or when overloaded members (&gt;100% capacity) can transfer hours to available teammates.
           </p>
         ) : (
           <ul className="flex flex-col gap-md">
@@ -256,15 +255,20 @@ export default function WorkloadView() {
                 className="p-md border border-outline-variant rounded-lg bg-surface-container-low/50"
               >
                 <div className="flex items-center justify-between gap-md mb-sm">
-                  <span className="font-label-md text-label-md text-on-surface">
-                    {proposal.task.title}
-                  </span>
+                  <div className="flex items-center gap-xs">
+                    <span className="font-label-md text-label-md text-on-surface">
+                      {proposal.task.title}
+                    </span>
+                    <Chip tone={proposal.type === "assign" ? "primary" : "neutral"} className="text-[10px] py-0 px-1.5">
+                      {proposal.type === "assign" ? "Assign" : "Transfer"}
+                    </Chip>
+                  </div>
                   <span className="font-label-md text-label-md text-primary flex-shrink-0">
                     {proposal.hours}h
                   </span>
                 </div>
-                <div className="flex items-center gap-sm flex-wrap text-body-sm text-body-sm text-secondary">
-                  <span>{proposal.from.name}</span>
+                <div className="flex items-center gap-sm flex-wrap text-body-sm text-secondary">
+                  <span>{proposal.from ? proposal.from.name : "Unassigned Backlog"}</span>
                   <Icon name="arrow_forward" className="text-[14px]" />
                   <span>{proposal.to.name}</span>
                   <span className="ml-auto font-label-md text-label-md text-primary">

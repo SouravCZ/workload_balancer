@@ -1,692 +1,873 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/ui";
 
 const navLinks = [
-  { label: "Product", href: "#product" },
   { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Why Us", href: "#why" },
+  { label: "Interactive Demo", href: "#demo" },
   { label: "FAQ", href: "#faq" },
 ];
 
-const heroMembers = [
-  { initials: "SJ", name: "Sarah Jenkins", role: "Backend", pct: 62, over: false },
-  { initials: "MK", name: "Marcus Kim", role: "Frontend", pct: 118, over: true },
-  { initials: "ER", name: "Elena Rostova", role: "Data", pct: 84, over: false },
-];
-
-const trustMarks = ["Northwind", "Helio Labs", "Cobalt", "Meridian", "Arcline"];
-
-const problems = [
+const interactiveTasks = [
   {
-    icon: "troubleshoot",
-    title: "Uneven workload distribution",
-    body: "Two engineers are at 120% while three sit under 60%. Nobody notices until someone quits.",
+    id: "t1",
+    title: "Backend API Revamp",
+    badge: "Critical Path",
+    priority: "High",
+    skills: ["Node.js", "Express", "Microservices"],
+    bestCandidate: {
+      initials: "SJ",
+      name: "Sarah Jenkins",
+      role: "Staff Backend Engineer",
+      currentLoad: 60,
+      newLoad: 78,
+      fitScore: 98,
+      skillMatchPct: 96,
+      availabilityScore: 100,
+      reasoning:
+        "Sarah has top historical throughput for Node.js microservices. With 16 hours of unused bandwidth this sprint, assigning this task minimizes critical path delay with zero overtime risk.",
+    },
   },
   {
-    icon: "heart_broken",
-    title: "Burnout that arrives too late",
-    body: "By the time it surfaces in a standup, it has already cost you a quarter of the roadmap.",
+    id: "t2",
+    title: "PostgreSQL Migration & Sharding",
+    badge: "Architecture",
+    priority: "Critical",
+    skills: ["PostgreSQL", "AWS RDS", "Performance Tuning"],
+    bestCandidate: {
+      initials: "AC",
+      name: "Alex Chen",
+      role: "Lead Systems Architect",
+      currentLoad: 45,
+      newLoad: 72,
+      fitScore: 94,
+      skillMatchPct: 98,
+      availabilityScore: 90,
+      reasoning:
+        "Alex has executed 4 previous zero-downtime DB migrations. At 45% load, he absorbs this 18-hour task while keeping the team well under the burnout threshold.",
+    },
   },
   {
-    icon: "extension_off",
-    title: "Skill mismatches",
-    body: "Tasks stall on people who lack the skill while experts sit idle on work they are overqualified for.",
+    id: "t3",
+    title: "Enterprise Design System Sync",
+    badge: "Frontend UI",
+    priority: "Medium",
+    skills: ["React 19", "Tailwind CSS", "Accessibility"],
+    bestCandidate: {
+      initials: "ER",
+      name: "Elena Rostova",
+      role: "Senior UI Engineer",
+      currentLoad: 65,
+      newLoad: 85,
+      fitScore: 91,
+      skillMatchPct: 94,
+      availabilityScore: 88,
+      reasoning:
+        "Elena maintains our internal core UI token library. Assigning this task ensures WCAG AAA compliance and prevents duplicate token sprawl.",
+    },
   },
-];
-
-const solutions = [
-  {
-    icon: "balance",
-    title: "Capacity balancing",
-    body: "Live bandwidth for every person, with rebalancing proposals generated automatically.",
-  },
-  {
-    icon: "psychology",
-    title: "Explainable fit scores",
-    body: "Every assignment is scored on skill overlap and availability, and shows its reasoning.",
-  },
-  {
-    icon: "monitor_heart",
-    title: "Early burnout signals",
-    body: "Risk scoring tracks sustained over-capacity weeks, not just a single overloaded sprint.",
-  },
-];
-
-const steps = [
-  {
-    n: "01",
-    icon: "upload_file",
-    title: "Connect your team",
-    body: "Import members, capacity, and skills. Equilibrium maps your org's real capacity in minutes.",
-  },
-  {
-    n: "02",
-    icon: "neurology",
-    title: "Let it score the work",
-    body: "Every open task is scored against every person on skill fit and remaining bandwidth.",
-  },
-  {
-    n: "03",
-    icon: "auto_awesome",
-    title: "Act on the reasoning",
-    body: "Approve the assignment and load rebalances automatically. Nothing happens in a black box.",
-  },
-];
-
-const features = [
-  {
-    icon: "psychology",
-    title: "Smart matching",
-    body: "Ranks candidates for any task using skill overlap and live availability, not seniority.",
-  },
-  {
-    icon: "balance",
-    title: "Capacity balancing",
-    body: "Real-time bandwidth per person, with transfer proposals that move hours off overloaded teammates.",
-  },
-  {
-    icon: "monitor_heart",
-    title: "Burnout prediction",
-    body: "Weights consecutive over-capacity weeks so you see risk building weeks before it peaks.",
-  },
-  {
-    icon: "grid_view",
-    title: "Skill gap detection",
-    body: "Compares required skills against the whole team and flags single points of failure.",
-  },
-  {
-    icon: "low_priority",
-    title: "Priority sequencing",
-    body: "Surfaces which tasks sit on the critical path and who can actually absorb them now.",
-  },
-  {
-    icon: "account_tree",
-    title: "Explainable AI",
-    body: "Plain-language reasoning attached to every recommendation, so managers can audit the call.",
-  },
-];
-
-const metrics = [
-  { value: "31%", label: "fewer missed deadlines" },
-  { value: "18h", label: "saved per manager, weekly" },
-  { value: "3.2x", label: "faster task assignment" },
-  { value: "94%", label: "burnout risk recall" },
 ];
 
 const faqs = [
   {
-    q: "Where does the workload data come from?",
-    a: "Equilibrium reads capacity, allocation, and skills from your existing tracker. The demo ships with a realistic mock engineering org so you can explore every screen without connecting anything.",
+    q: "How does Equilibrium calculate the Fit Score?",
+    a: "Fit Score is a weighted multi-attribute algorithm. 60% of the weight is based on skill overlap and proficiency depth (1-5 scale) against required task competencies. 40% is based on the engineer's real-time availability score. Both components are clearly broken down so the reasoning is never a black box.",
   },
   {
-    q: "How are fit scores calculated?",
-    a: "A score blends skill overlap, weighted by proficiency against the task's required skills, with availability derived from remaining capacity. Both halves are shown alongside the score so the reasoning is never hidden.",
+    q: "Does this replace Jira, Linear, or GitHub Issues?",
+    a: "No. Equilibrium is an intelligence and decision-support layer that integrates on top of your existing issue trackers. It ingests tickets, calculates capacity dynamics, and suggests optimal assignments without requiring you to switch workflows.",
   },
   {
-    q: "Does assigning a task change someone's load automatically?",
-    a: "Yes. Assigning or unassigning moves the estimated hours between owners, and the utilization and risk views update immediately.",
+    q: "Can team leads override the recommendations?",
+    a: "Always. Equilibrium provides actionable recommendations with transparent reasoning, but team leads always hold full discretionary control. Overrides are supported with 1-click reassignment.",
   },
   {
-    q: "Can I override a recommendation?",
-    a: "Always. Equilibrium proposes, you decide. Every suggestion can be accepted or dismissed, and the reasoning is shown so overrides stay informed.",
+    q: "How is Burnout Risk predicted without surveillance?",
+    a: "We never use invasive tracking like keystroke monitoring or webcam activity. Burnout prediction is strictly based on objective project telemetry: sustained weekly allocation ratios, consecutive overtime assignments, and task switching friction.",
   },
   {
-    q: "Is this a replacement for our project tracker?",
-    a: "No. It sits on top of the tracker you already use and focuses on the decision a tracker does not make for you: who should own this, and is the team able to absorb it.",
+    q: "Can I try the full system without signing up?",
+    a: "Yes! Our live interactive demo environment is pre-loaded with an engineering team (10 members, 18 active tasks). Click 'Get started free' or 'Explore interactive demo' to explore the full suite with zero setup.",
   },
 ];
 
 function SectionLabel({ children }) {
   return (
-    <span className="inline-flex items-center gap-sm font-label-md text-label-md text-primary-container uppercase tracking-[0.14em]">
-      <span className="w-6 h-px bg-primary-container" />
+    <div className="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container rounded-full pl-2 pr-3 py-1 text-xs font-label-md font-semibold tracking-wide">
+      <span className="w-2 h-2 rounded-full bg-primary-container" />
       {children}
-    </span>
-  );
-}
-
-function HeroRow({ member }) {
-  return (
-    <div className="flex items-center gap-md">
-      <div
-        className={`w-9 h-9 rounded-full flex items-center justify-center font-label-md text-[11px] flex-shrink-0 ${
-          member.over ? "bg-error-container text-error" : "bg-secondary-container text-on-secondary-container"
-        }`}
-      >
-        {member.initials}
-      </div>
-      <div className="flex-grow min-w-0">
-        <div className="flex justify-between items-baseline mb-1.5">
-          <span className="font-body-sm text-body-sm text-on-surface truncate">{member.name}</span>
-          <span
-            className={`font-label-md text-label-md text-[11px] ml-md flex-shrink-0 ${
-              member.over ? "text-error" : "text-secondary"
-            }`}
-          >
-            {member.pct}%
-          </span>
-        </div>
-        <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full ${member.over ? "bg-error overflow-hatch" : "utilization-bar-fill"}`}
-            style={{ width: `${Math.min(100, member.pct)}%` }}
-          />
-        </div>
-      </div>
     </div>
   );
 }
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const [showBanner, setShowBanner] = useState(true);
+  const [workEmail, setWorkEmail] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedTaskIdx, setSelectedTaskIdx] = useState(0);
+
+  const handleQuickSignup = (e) => {
+    e.preventDefault();
+    navigate("/dashboard");
+  };
+
+  const currentTask = interactiveTasks[selectedTaskIdx];
 
   return (
-    <div className="min-h-screen bg-background text-on-background antialiased">
-      <style>{`html { scroll-behavior: smooth; }`}</style>
-
-      <nav className="fixed w-full top-0 z-50 bg-background/85 backdrop-blur-md border-b border-outline-variant/60">
-        <div className="flex justify-between items-center h-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-          <Link to="/" className="flex items-center gap-sm">
-            <div className="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
-              <Icon name="view_cozy" className="text-[18px]" filled />
-            </div>
-            <span className="font-headline-sm text-headline-sm font-bold text-on-background">
-              Equilibrium
+    <div className="min-h-screen bg-white text-[#172b4d] font-body-md antialiased selection:bg-[#deebff] selection:text-[#0052cc]">
+      {/* Top Banner Announcement */}
+      {showBanner && (
+        <div className="bg-[#deebff]/70 border-b border-[#b3d4ff] text-[#091e42] py-2 px-4 text-xs font-medium flex items-center justify-center relative z-50">
+          <div className="flex items-center gap-1.5 text-center flex-wrap justify-center pr-8 sm:pr-0">
+            <span className="bg-[#0052cc] text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider mr-1">
+              v2.4
             </span>
-          </Link>
+            <span>Autonomous Workload Balancer & Real-time Burnout Predictor is now live.</span>
+            <a href="#demo" className="text-[#0052cc] hover:text-[#0747a6] underline font-semibold transition-colors">
+              Explore interactive demo &rarr;
+            </a>
+          </div>
+          <button
+            onClick={() => setShowBanner(false)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-[#626f86] hover:text-[#172b4d] rounded transition-colors"
+            aria-label="Dismiss banner"
+          >
+            <Icon name="close" className="text-[16px]" />
+          </button>
+        </div>
+      )}
 
-          <div className="hidden md:flex gap-8 items-center font-body-sm text-body-sm">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-secondary hover:text-primary-container transition-colors"
-              >
-                {link.label}
+      {/* Modern Navigation Bar */}
+      <nav className="bg-white border-b border-[#ebecf0] sticky top-0 z-40">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Left Brand and Nav Links */}
+          <div className="flex items-center gap-6 lg:gap-10">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-bold text-base shadow-sm group-hover:scale-105 transition-transform">
+                <Icon name="balance" className="text-[20px]" filled />
+              </div>
+              <div>
+                <span className="font-headline-sm text-lg font-bold tracking-tight block text-primary leading-tight">
+                  Equilibrium
+                </span>
+                <span className="font-label-md text-[9px] text-secondary tracking-widest uppercase block -mt-0.5">
+                  Workload Intelligence
+                </span>
+              </div>
+            </Link>
+
+            {/* Menu Items */}
+            <div className="hidden md:flex items-center gap-1 text-sm font-medium text-[#172b4d]">
+              <a href="#features" className="px-3.5 py-2 rounded-md hover:bg-[#ebecf0] transition-colors text-[#172b4d]">
+                Features
               </a>
-            ))}
+              <a href="#demo" className="px-3.5 py-2 rounded-md hover:bg-[#ebecf0] transition-colors text-[#172b4d]">
+                Interactive Demo
+              </a>
+              <a href="#faq" className="px-3.5 py-2 rounded-md hover:bg-[#ebecf0] transition-colors text-[#172b4d]">
+                FAQ
+              </a>
+            </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-md">
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="w-9 h-9 rounded-full hover:bg-[#ebecf0] text-[#626f86] hover:text-[#172b4d] flex items-center justify-center transition-colors"
+              aria-label="Search"
+            >
+              <Icon name="search" className="text-[20px]" />
+            </button>
+
             <Link
               to="/login"
-              className="font-label-md text-label-md text-secondary hover:text-on-surface transition-colors"
+              className="text-sm font-semibold text-[#172b4d] hover:text-[#0052cc] px-3 py-2 transition-colors"
             >
               Sign in
             </Link>
-            <Link
-              to="/login"
-              className="bg-primary-container text-on-primary font-label-md px-5 py-2.5 rounded-md hover:bg-primary transition-colors soft-shadow"
-            >
-              Try Demo
-            </Link>
-          </div>
 
-          <button
-            type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-md hover:bg-surface-container transition-colors"
-          >
-            <Icon name={menuOpen ? "close" : "menu"} className="text-[22px]" />
-          </button>
+            <Link
+              to="/dashboard"
+              className="bg-[#0052cc] hover:bg-[#0747a6] text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-sm transition-all hover:shadow"
+            >
+              Get started free
+            </Link>
+
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden p-2 rounded-lg text-secondary hover:text-primary hover:bg-surface-container"
+              aria-label="Toggle navigation"
+            >
+              <Icon name={menuOpen ? "close" : "menu"} className="text-[24px]" />
+            </button>
+          </div>
         </div>
 
-        {menuOpen ? (
-          <div className="md:hidden bg-surface-container-lowest border-t border-outline-variant/60 px-margin-mobile py-md">
+        {/* Mobile Nav Drawer */}
+        {menuOpen && (
+          <div className="md:hidden bg-white border-b border-[#ebecf0] px-4 py-6 space-y-3 shadow-lg">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block py-3 font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
+                className="block py-2 text-[#44546f] hover:text-[#0052cc] font-medium"
               >
                 {link.label}
               </a>
             ))}
-            <Link
-              to="/login"
-              onClick={() => setMenuOpen(false)}
-              className="mt-md block w-full text-center bg-primary-container text-on-primary font-label-md text-label-md py-3 rounded-md"
-            >
-              Try Demo
-            </Link>
-          </div>
-        ) : null}
-      </nav>
-
-      <section id="product" className="relative overflow-hidden scroll-mt-20">
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.55]"
-          style={{
-            backgroundImage:
-              "radial-gradient(60rem 32rem at 78% 8%, rgba(49,67,59,0.10) 0%, transparent 60%), radial-gradient(40rem 24rem at 4% 92%, rgba(76,99,89,0.08) 0%, transparent 60%)",
-          }}
-        />
-
-        <div className="relative max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-32 pb-24 md:pt-40 md:pb-32 grid md:grid-cols-2 gap-xl md:gap-gutter items-center">
-          <div>
-            <div className="inline-flex items-center gap-sm bg-secondary-container text-on-secondary-container rounded-full pl-1.5 pr-md py-1.5 mb-lg">
-              <span className="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
-                <Icon name="auto_awesome" className="text-[14px]" filled />
-              </span>
-              <span className="font-label-md text-label-md text-[11px]">AI workload intelligence</span>
-            </div>
-
-            <h1 className="font-display-lg text-[40px] md:text-[60px] leading-[1.04] tracking-[-0.03em] mb-lg">
-              Balance your team's
-              <br />
-              workload{" "}
-              <span className="text-primary-container">before it becomes burnout.</span>
-            </h1>
-
-            <p className="font-body-lg text-body-lg text-secondary mb-xl max-w-lg">
-              Equilibrium matches every task to the right person, surfaces capacity risk early, and
-              shows its reasoning — so managers stop guessing and teams stop burning out.
-            </p>
-
-            <div className="flex flex-wrap gap-md mb-xl">
+            <div className="pt-4 border-t border-[#ebecf0] flex flex-col gap-3">
               <Link
                 to="/login"
-                className="bg-primary-container text-on-primary font-label-md px-7 py-3.5 rounded-md hover:bg-primary transition-colors soft-shadow inline-flex items-center gap-sm"
-              >
-                Try the demo
-                <Icon name="arrow_forward" className="text-[18px]" />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="border border-outline-variant bg-surface-container-lowest text-on-background font-label-md px-7 py-3.5 rounded-md hover:bg-surface-container transition-colors inline-flex items-center gap-sm"
-              >
-                See how it works
-              </a>
-            </div>
-
-            <div className="flex flex-wrap gap-xl pt-lg border-t border-outline-variant/60">
-              {[
-                { value: "31%", label: "fewer missed deadlines" },
-                { value: "18h", label: "saved per manager" },
-                { value: "3.2x", label: "faster assignment" },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <div className="font-headline-md text-headline-md text-primary leading-none">
-                    {stat.value}
-                  </div>
-                  <div className="font-body-sm text-body-sm text-secondary mt-1.5">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg soft-shadow">
-              <div className="flex justify-between items-center mb-lg pb-md border-b border-outline-variant/60">
-                <div>
-                  <h3 className="font-headline-sm text-headline-sm text-primary leading-tight">
-                    Team Workload
-                  </h3>
-                  <p className="font-body-sm text-body-sm text-secondary text-[12px] mt-0.5">
-                    Live capacity across 8 members
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1.5 bg-risk-green text-risk-green-ink rounded-full px-2.5 py-1 font-label-md text-[10px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-risk-green-ink" />
-                  Live
-                </span>
-              </div>
-
-              <div className="space-y-md">
-                {heroMembers.map((member) => (
-                  <HeroRow key={member.name} member={member} />
-                ))}
-              </div>
-
-              <div className="mt-lg bg-surface-container-low border border-outline-variant rounded-lg p-md flex items-start gap-sm">
-                <Icon name="auto_awesome" className="text-primary-container text-[18px] flex-shrink-0" filled />
-                <div>
-                  <span className="block font-label-md text-label-md text-[11px] text-on-surface mb-1">
-                    Recommended rebalance
-                  </span>
-                  <span className="block font-body-sm text-body-sm text-secondary text-[12px] leading-relaxed">
-                    Move 2 backend tasks from Marcus to Sarah. Fit score 0.81, and Marcus drops from
-                    118% to 94% capacity.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden lg:flex absolute -bottom-6 -left-6 bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-3 lift-shadow items-center gap-sm">
-              <Icon name="check_circle" className="text-[18px] text-primary-container" filled />
-              <div>
-                <span className="block font-label-md text-label-md text-[10px] text-secondary">
-                  Skill coverage
-                </span>
-                <span className="block font-headline-sm text-headline-sm text-primary leading-tight">
-                  94% covered
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-outline-variant/60 bg-surface-container-low/50">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-lg">
-          <p className="text-center font-label-md text-label-md text-[11px] text-secondary uppercase tracking-[0.14em] mb-md">
-            Keeping teams balanced at
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-xl gap-y-md">
-            {trustMarks.map((mark) => (
-              <span
-                key={mark}
-                className="font-headline-sm text-headline-sm text-on-surface-variant opacity-60"
-              >
-                {mark}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="why" className="scroll-mt-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-24 md:py-32">
-        <div className="max-w-2xl mb-16">
-          <SectionLabel>The balancing act</SectionLabel>
-          <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mt-md mb-md">
-            Invisible workloads are the expensive kind.
-          </h2>
-          <p className="font-body-md text-body-md text-secondary">
-            Most teams don't have a productivity problem. They have a distribution problem — and it
-            only becomes visible once something breaks.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-lg">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg md:p-xl soft-shadow">
-            <h3 className="font-headline-sm text-headline-sm text-error flex items-center gap-sm mb-lg">
-              <span className="w-8 h-8 rounded-lg bg-error-container text-error flex items-center justify-center">
-                <Icon name="warning" className="text-[18px]" />
-              </span>
-              Without Equilibrium
-            </h3>
-            <div className="space-y-lg">
-              {problems.map((item) => (
-                <div key={item.title} className="flex gap-md">
-                  <Icon
-                    name={item.icon}
-                    className="text-[20px] text-error flex-shrink-0 mt-0.5"
-                  />
-                  <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-on-surface mb-1">
-                      {item.title}
-                    </h4>
-                    <p className="font-body-sm text-body-sm text-secondary leading-relaxed">
-                      {item.body}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg md:p-xl soft-shadow">
-            <h3 className="font-headline-sm text-headline-sm text-primary flex items-center gap-sm mb-lg">
-              <span className="w-8 h-8 rounded-lg bg-secondary-container text-primary-container flex items-center justify-center">
-                <Icon name="check_circle" className="text-[18px]" />
-              </span>
-              With Equilibrium
-            </h3>
-            <div className="space-y-lg">
-              {solutions.map((item) => (
-                <div key={item.title} className="flex gap-md">
-                  <Icon
-                    name={item.icon}
-                    className="text-[20px] text-primary-container flex-shrink-0 mt-0.5"
-                  />
-                  <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-on-surface mb-1">
-                      {item.title}
-                    </h4>
-                    <p className="font-body-sm text-body-sm text-secondary leading-relaxed">
-                      {item.body}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="how-it-works"
-        className="scroll-mt-20 bg-surface-container-low/50 border-y border-outline-variant/60"
-      >
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-24 md:py-32">
-          <div className="max-w-2xl mb-16">
-            <SectionLabel>How it works</SectionLabel>
-            <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mt-md mb-md">
-              Three steps to a balanced team.
-            </h2>
-            <p className="font-body-md text-body-md text-secondary">
-              No migration project, no new process to adopt. Equilibrium reads the capacity you
-              already track and turns it into decisions.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-lg">
-            {steps.map((step) => (
-              <div
-                key={step.n}
-                className="relative bg-surface-container-lowest border border-outline-variant rounded-xl p-lg soft-shadow card-hover-shadow transition-shadow"
-              >
-                <div className="flex items-center justify-between mb-lg">
-                  <span className="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
-                    <Icon name={step.icon} className="text-[20px]" />
-                  </span>
-                  <span className="font-headline-lg text-headline-lg text-outline-variant/50 leading-none">
-                    {step.n}
-                  </span>
-                </div>
-                <h3 className="font-headline-sm text-headline-sm text-primary mb-sm">{step.title}</h3>
-                <p className="font-body-sm text-body-sm text-secondary leading-relaxed">{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="scroll-mt-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-24 md:py-32">
-        <div className="max-w-2xl mb-16">
-          <SectionLabel>Capabilities</SectionLabel>
-          <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mt-md mb-md">
-            Everything you need to run a healthy team.
-          </h2>
-          <p className="font-body-md text-body-md text-secondary">
-            Six tools that share one view of capacity, skills, and risk.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-lg">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group bg-surface-container-lowest border border-outline-variant rounded-xl p-lg soft-shadow card-hover-shadow transition-all hover:-translate-y-0.5 hover:border-primary-container/40"
-            >
-              <span className="w-10 h-10 rounded-lg bg-surface-container text-primary-container flex items-center justify-center mb-lg group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
-                <Icon name={feature.icon} className="text-[20px]" />
-              </span>
-              <h3 className="font-headline-sm text-headline-sm text-primary mb-sm">{feature.title}</h3>
-              <p className="font-body-sm text-body-sm text-secondary leading-relaxed">
-                {feature.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-primary text-on-primary">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-20">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
-            {metrics.map((metric) => (
-              <div key={metric.label} className="text-center lg:text-left">
-                <div className="font-display-lg text-[44px] leading-none tracking-[-0.02em]">
-                  {metric.value}
-                </div>
-                <div className="font-body-sm text-body-sm opacity-75 mt-2">{metric.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="faq" className="scroll-mt-20 max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-24 md:py-32">
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-md">
-            <SectionLabel>FAQ</SectionLabel>
-          </div>
-          <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg">
-            Questions, answered.
-          </h2>
-        </div>
-
-        <div className="space-y-sm">
-          {faqs.map((faq) => (
-            <details
-              key={faq.q}
-              className="group bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden soft-shadow hover:border-primary-container/40 transition-colors"
-            >
-              <summary className="flex items-center justify-between gap-md px-lg py-md cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                <span className="font-body-md text-body-md font-semibold text-on-surface">
-                  {faq.q}
-                </span>
-                <Icon
-                  name="expand_more"
-                  className="text-[20px] text-secondary flex-shrink-0 transition-transform group-open:rotate-180"
-                />
-              </summary>
-              <p className="px-lg pb-md font-body-sm text-body-sm text-secondary leading-relaxed">
-                {faq.a}
-              </p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-margin-mobile md:px-margin-desktop pb-24 md:pb-32">
-        <div className="max-w-container-max mx-auto relative overflow-hidden bg-primary-container text-on-primary rounded-xl px-gutter py-20 text-center">
-          <div
-            className="absolute inset-0 pointer-events-none opacity-25"
-            style={{
-              backgroundImage:
-                "radial-gradient(30rem 20rem at 50% 0%, rgba(255,255,255,0.35) 0%, transparent 65%)",
-            }}
-          />
-          <div className="relative">
-            <h2 className="font-headline-lg-mobile md:font-headline-xl text-headline-lg-mobile md:text-headline-xl tracking-[-0.02em] mb-md">
-              Balance your team in seconds.
-            </h2>
-            <p className="font-body-lg text-body-lg opacity-85 mb-xl max-w-xl mx-auto">
-              Stop guessing who has room. Open the demo and watch a real team rebalance itself.
-            </p>
-            <div className="flex flex-wrap gap-md justify-center">
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-sm bg-surface-container-lowest text-primary-container font-label-md px-8 py-3.5 rounded-md hover:bg-surface transition-colors soft-shadow"
-              >
-                Get started now
-                <Icon name="arrow_forward" className="text-[18px]" />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-sm border border-on-primary/35 font-label-md px-8 py-3.5 rounded-md hover:bg-on-primary/10 transition-colors"
-              >
-                Talk through it
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="w-full bg-surface-container-low border-t border-outline-variant/60">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-lg mb-xl">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-sm mb-md">
-                <div className="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
-                  <Icon name="view_cozy" className="text-[18px]" filled />
-                </div>
-                <span className="font-headline-sm text-headline-sm font-bold">Equilibrium</span>
-              </div>
-              <p className="font-body-sm text-body-sm text-secondary leading-relaxed max-w-xs">
-                Balancing productivity and well-being for engineering teams.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-sm">
-              <span className="font-label-md text-label-md text-[11px] uppercase tracking-[0.14em] text-on-surface mb-1">
-                Product
-              </span>
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-sm">
-              <span className="font-label-md text-label-md text-[11px] uppercase tracking-[0.14em] text-on-surface mb-1">
-                Get started
-              </span>
-              <Link
-                to="/login"
-                className="font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
-              >
-                Try the demo
-              </Link>
-              <Link
-                to="/login"
-                className="font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
+                onClick={() => setMenuOpen(false)}
+                className="w-full text-center py-2.5 font-semibold text-[#172b4d] border border-[#dfe1e6] rounded-full"
               >
                 Sign in
               </Link>
               <Link
                 to="/dashboard"
-                className="font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
+                onClick={() => setMenuOpen(false)}
+                className="w-full text-center py-2.5 font-semibold bg-[#0052cc] text-white rounded-full"
               >
-                Open dashboard
+                Get started free
+              </Link>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Quick Search Dialog Modal */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#dfe1e6] w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-[#dfe1e6] flex items-center gap-3">
+              <Icon name="search" className="text-[#626f86] text-[22px]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search features, views, or workspaces..."
+                className="flex-1 text-[#172b4d] placeholder-[#8590a2] outline-none text-base bg-transparent"
+                autoFocus
+              />
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="p-1 text-[#626f86] hover:text-[#172b4d] rounded"
+              >
+                <Icon name="close" className="text-[20px]" />
+              </button>
+            </div>
+            <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
+              <p className="text-xs font-bold text-[#626f86] uppercase tracking-wider mb-2">Jump to View</p>
+              <Link
+                to="/dashboard"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-[#f4f5f7] text-[#172b4d] text-sm group"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon name="dashboard" className="text-[#0052cc]" />
+                  <span className="font-medium">Operations Dashboard</span>
+                </div>
+                <Icon name="arrow_forward" className="text-[16px] text-[#626f86] group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/workload"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-[#f4f5f7] text-[#172b4d] text-sm group"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon name="groups" className="text-[#0052cc]" />
+                  <span className="font-medium">Team Workload Balancer</span>
+                </div>
+                <Icon name="arrow_forward" className="text-[16px] text-[#626f86] group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/skill-matrix"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-[#f4f5f7] text-[#172b4d] text-sm group"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon name="psychology" className="text-[#0052cc]" />
+                  <span className="font-medium">Competency & Skill Matrix</span>
+                </div>
+                <Icon name="arrow_forward" className="text-[16px] text-[#626f86] group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/burnout-risk"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-[#f4f5f7] text-[#172b4d] text-sm group"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon name="psychiatry" className="text-[#ba1a1a]" />
+                  <span className="font-medium">Burnout Risk Fatigue Radar</span>
+                </div>
+                <Icon name="arrow_forward" className="text-[16px] text-[#626f86] group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modern High-Conversion Hero Section */}
+      <section className="bg-white border-b border-[#ebecf0] pt-12 pb-20 md:pt-16 md:pb-24">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* Left Column: Bold Headline & Context */}
+          <div className="lg:col-span-7 space-y-6">
+            <h1 className="text-primary text-[44px] sm:text-[56px] lg:text-[64px] font-bold tracking-[-0.03em] leading-[1.08]">
+              Turn sprint plans into balanced, agent-ready tasks
+            </h1>
+
+            <p className="text-xl sm:text-[22px] text-secondary leading-relaxed max-w-2xl font-normal">
+              Then build. Orchestrate engineering bandwidth across your team and agents, with real-time capacity and zero burnout.
+            </p>
+          </div>
+
+          {/* Right Column: Work Email & Google Signup with Technical Grid Backdrop */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative p-6 sm:p-8 rounded-2xl border border-[#dfe1e6] bg-white shadow-sm overflow-hidden">
+              <div className="absolute right-0 bottom-0 w-52 h-52 hero-grid-pattern opacity-60 pointer-events-none" />
+
+              <form onSubmit={handleQuickSignup} className="relative z-10 space-y-4">
+                <div>
+                  <label htmlFor="work-email" className="block text-xs font-bold text-[#172b4d] uppercase tracking-wide mb-2">
+                    Work email
+                  </label>
+                  <input
+                    id="work-email"
+                    type="email"
+                    value={workEmail}
+                    onChange={(e) => setWorkEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-[#dfe1e6] text-[#172b4d] placeholder-[#8590a2] focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 outline-none text-base bg-white transition-all shadow-inner"
+                  />
+                  <p className="text-xs text-[#626f86] mt-2">
+                    Use a work email to find teammates and get access to Equilibrium AI
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 px-6 rounded-full bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-base shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Sign up</span>
+                </button>
+
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="w-full border-t border-[#dfe1e6]" />
+                  <span className="absolute px-3 bg-white text-xs text-[#626f86] font-medium">
+                    Or continue with
+                  </span>
+                </div>
+
+                <Link
+                  to="/dashboard"
+                  className="w-full py-3 px-6 rounded-full border border-[#dfe1e6] bg-white hover:bg-[#f4f5f7] text-[#172b4d] font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  <span>Google</span>
+                </Link>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3-Column Core Features Section */}
+      <section id="features" className="scroll-mt-16 bg-white py-16 md:py-24 border-b border-[#ebecf0]">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mb-12 sm:mb-16">
+            <h2 className="text-[#091e42] text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight leading-[1.15]">
+              Built for sustainable engineering delivery
+            </h2>
+            <p className="text-[#44546f] text-base sm:text-lg mt-3 leading-relaxed">
+              Replace intuition and guesswork with deterministic mathematical telemetry. Equilibrium provides real-time capacity balancing, skill depth matching, and burnout prevention.
+            </p>
+          </div>
+
+          {/* 3-Column Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+            {/* Feature 1: Workload Balancer & Rebalancing */}
+            <div className="flex flex-col">
+              <div className="h-[260px] bg-[#0c1017] rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between border border-[#1e293b]">
+                {/* Header status */}
+                <div className="flex items-center justify-between text-xs border-b border-[#1e293b] pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-white font-semibold text-xs tracking-wide">Dynamic Capacity Rebalancing</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    2 Overloaded
+                  </span>
+                </div>
+
+                {/* Simulated Donor & Receiver Load Shift */}
+                <div className="space-y-3 py-1">
+                  {/* Overloaded Donor */}
+                  <div className="bg-[#111827] border border-red-500/30 rounded-xl p-2.5 space-y-1.5">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-200 font-medium">Marcus Kim (Staff Frontend)</span>
+                      <span className="text-red-400 font-bold font-mono">135% (54h / 40h)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-red-500 rounded-full w-full" />
+                    </div>
+                  </div>
+
+                  {/* Transfer indicator chip */}
+                  <div className="flex items-center justify-center gap-2 text-[11px] text-[#38bdf8] font-mono">
+                    <Icon name="arrow_downward" className="text-[14px] animate-bounce" />
+                    <span>Auto-move 14h &bull; GraphQL Schema &bull; 92% fit</span>
+                  </div>
+
+                  {/* Underutilized Receiver */}
+                  <div className="bg-[#111827] border border-emerald-500/30 rounded-xl p-2.5 space-y-1.5">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-200 font-medium">Lucas Scott (Fullstack)</span>
+                      <span className="text-emerald-400 font-bold font-mono">35% &rarr; 70% (Healthy)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full w-[70%]" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer action badge */}
+                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-[#1e293b]">
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <Icon name="auto_awesome" className="text-[14px] text-sky-400" />
+                    Zero overtime risk
+                  </span>
+                  <span className="text-emerald-400 font-semibold font-mono">Resolved in 1-Click</span>
+                </div>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-[#091e42] mt-6 mb-2 tracking-tight">
+                Autonomous Workload Balancer
+              </h3>
+              <p className="text-[#44546f] text-sm leading-relaxed flex-1">
+                Track real-time capacity allocations against 40h sprint baselines. Automated rebalancing detects overloaded donors (&gt;100%) and proposes zero-burnout transfers to underutilized teammates.
+              </p>
+              <Link
+                to="/workload"
+                className="text-[#0052cc] hover:text-[#0747a6] font-semibold text-sm inline-flex items-center gap-1.5 mt-4 group"
+              >
+                <span>Explore Workload Balancer</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </Link>
             </div>
 
-            <div className="flex flex-col gap-sm">
-              <span className="font-label-md text-label-md text-[11px] uppercase tracking-[0.14em] text-on-surface mb-1">
-                Company
-              </span>
-              {["Privacy Policy", "Terms of Service", "Security"].map((item) => (
-                <a
-                  key={item}
-                  href="#"
-                  className="font-body-sm text-body-sm text-secondary hover:text-primary-container transition-colors"
-                >
-                  {item}
-                </a>
-              ))}
+            {/* Feature 2: Skill Matrix & Fit Scoring */}
+            <div className="flex flex-col">
+              <div className="h-[260px] bg-[#f0f7ff] rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between border border-[#dbeafe] hero-grid-pattern">
+                {/* Header */}
+                <div className="flex items-center justify-between text-xs border-b border-[#dbeafe] pb-2.5 z-10">
+                  <span className="font-bold text-[#0f172a] text-xs">Competency Depth & Coverage</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    98% Match Depth
+                  </span>
+                </div>
+
+                {/* Heatmap Matrix Row Preview */}
+                <div className="space-y-2 z-10 py-1">
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-[#e2e8f0] space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[#0f172a]">Sarah Jenkins</span>
+                      <span className="text-[#0052cc] font-mono font-bold">Fit Score: 98%</span>
+                    </div>
+
+                    {/* Skill ratings pill row */}
+                    <div className="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono">
+                      <div className="p-1 rounded bg-[#31433b] text-white font-bold" title="Node.js: Level 5">Node.js [5]</div>
+                      <div className="p-1 rounded bg-[#6b8a7c] text-white font-medium" title="API Design: Level 4">API [4]</div>
+                      <div className="p-1 rounded bg-[#b3ccc0] text-[#091f18]" title="SQL: Level 3">SQL [3]</div>
+                      <div className="p-1 rounded bg-[#d3e7dc] text-[#384b42]" title="React: Level 2">React [2]</div>
+                    </div>
+                  </div>
+
+                  {/* SPOF alert pill */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] text-amber-900">
+                    <div className="flex items-center gap-1.5">
+                      <Icon name="warning" className="text-amber-600 text-[14px]" />
+                      <span className="font-medium">SPOF: Cloud Architecture</span>
+                    </div>
+                    <span className="text-[10px] bg-amber-200/80 px-1.5 py-0.5 rounded font-bold">1 Expert</span>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between text-[11px] text-[#64748b] pt-2 border-t border-[#dbeafe] z-10">
+                  <span>Deterministic Fit: 60% Skill + 40% Headroom</span>
+                  <span className="text-[#0052cc] font-bold">100% Explainable</span>
+                </div>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-[#091e42] mt-6 mb-2 tracking-tight">
+                Skill Matrix & Fit Scoring
+              </h3>
+              <p className="text-[#44546f] text-sm leading-relaxed flex-1">
+                Replace subjective task assignment with deterministic fit scoring (60% skill proficiency + 40% availability). Spot Single Points of Failure (SPOF) and untapped talent across Technical, Soft, and Domain skills.
+              </p>
+              <Link
+                to="/skill-matrix"
+                className="text-[#0052cc] hover:text-[#0747a6] font-semibold text-sm inline-flex items-center gap-1.5 mt-4 group"
+              >
+                <span>Explore Skill Matrix</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+              </Link>
+            </div>
+
+            {/* Feature 3: Burnout Risk Fatigue Radar */}
+            <div className="flex flex-col">
+              <div className="h-[260px] bg-[#fdf2f2]/60 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between border border-[#fecaca] shadow-sm">
+                {/* Header */}
+                <div className="flex items-center justify-between text-xs border-b border-[#fecaca] pb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="psychiatry" className="text-[#dc2626] text-[16px]" />
+                    <span className="font-bold text-[#991b1b] text-xs">Fatigue & Overtime Radar</span>
+                  </div>
+                  <span className="bg-[#dc2626] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    High Risk Tier
+                  </span>
+                </div>
+
+                {/* Fatigue metrics & Streak visual */}
+                <div className="space-y-2 py-1">
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-[#fee2e2] space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[#0f172a]">Marcus Kim (Staff)</span>
+                      <span className="text-[#dc2626] font-mono font-bold">Risk Score: 100/100</span>
+                    </div>
+
+                    {/* Streak telemetry */}
+                    <div className="flex items-center gap-1 text-[11px] text-[#b91c1c]">
+                      <Icon name="timer" className="text-[14px]" />
+                      <span>4 consecutive weeks &gt;100% capacity</span>
+                    </div>
+
+                    {/* 5-Week historical load sparkline bars */}
+                    <div className="flex items-end justify-between gap-1.5 h-7 pt-1">
+                      <div className="flex-1 bg-emerald-200 rounded-t h-[65%]" title="W1: 65%" />
+                      <div className="flex-1 bg-amber-300 rounded-t h-[85%]" title="W2: 85%" />
+                      <div className="flex-1 bg-red-400 rounded-t h-[95%]" title="W3: 110%" />
+                      <div className="flex-1 bg-red-500 rounded-t h-[100%]" title="W4: 125%" />
+                      <div className="flex-1 bg-red-600 rounded-t h-[100%]" title="W5: 135%" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between text-[11px] text-[#991b1b] pt-2 border-t border-[#fecaca]">
+                  <span className="flex items-center gap-1">
+                    <Icon name="shield" className="text-[14px]" />
+                    Zero surveillance telemetry
+                  </span>
+                  <span className="font-mono font-bold">Early Alert</span>
+                </div>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-[#091e42] mt-6 mb-2 tracking-tight">
+                Burnout Risk Fatigue Radar
+              </h3>
+              <p className="text-[#44546f] text-sm leading-relaxed flex-1">
+                Objective fatigue assessment without invasive surveillance. Evaluates sustained overtime streaks and capacity overages to alert managers weeks before critical engineers burn out.
+              </p>
+              <Link
+                to="/burnout-risk"
+                className="text-[#0052cc] hover:text-[#0747a6] font-semibold text-sm inline-flex items-center gap-1.5 mt-4 group"
+              >
+                <span>Explore Burnout Radar</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Live Task Matching Simulator Section */}
+      <section id="demo" className="scroll-mt-16 py-16 md:py-24 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+          <SectionLabel>Live Interactive Simulator</SectionLabel>
+          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-primary">
+            Test the AI matching engine right now.
+          </h2>
+          <p className="font-body-md text-secondary">
+            Select an unassigned ticket below to watch Equilibrium calculate the optimal assignee,
+            projected capacity changes, and explainable decision telemetry.
+          </p>
+        </div>
+
+        {/* Task Selector Tabs */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {interactiveTasks.map((task, idx) => (
+            <button
+              key={task.id}
+              onClick={() => setSelectedTaskIdx(idx)}
+              className={`p-5 rounded-xl border text-left transition-all ${
+                selectedTaskIdx === idx
+                  ? "bg-surface-container-lowest border-primary shadow-md ring-1 ring-primary"
+                  : "bg-surface-container-low/50 border-outline-variant hover:bg-surface-container-lowest"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-label-md uppercase tracking-wider px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">
+                  {task.badge}
+                </span>
+                <span className="text-xs font-label-md text-secondary">{task.priority} Priority</span>
+              </div>
+              <h4 className="font-headline-sm text-sm font-bold text-primary mb-2">{task.title}</h4>
+              <div className="flex flex-wrap gap-1">
+                {task.skills.map((s) => (
+                  <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-surface-container text-secondary">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Interactive Match Breakdown Result */}
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 md:p-10 card-shadow grid lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-7 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg">
+                {currentTask.bestCandidate.initials}
+              </div>
+              <div>
+                <h3 className="font-headline-sm text-lg font-bold text-primary">
+                  Optimal Match: {currentTask.bestCandidate.name}
+                </h3>
+                <p className="font-body-sm text-xs text-secondary">{currentTask.bestCandidate.role}</p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-[#FAF9F6] border border-outline-variant">
+                <span className="font-label-md text-[11px] text-secondary uppercase block">
+                  Overall Fit
+                </span>
+                <span className="font-headline-md text-2xl font-bold text-primary block mt-1">
+                  {currentTask.bestCandidate.fitScore}%
+                </span>
+              </div>
+              <div className="p-4 rounded-xl bg-[#FAF9F6] border border-outline-variant">
+                <span className="font-label-md text-[11px] text-secondary uppercase block">
+                  Skill Match
+                </span>
+                <span className="font-headline-md text-2xl font-bold text-primary block mt-1">
+                  {currentTask.bestCandidate.skillMatchPct}%
+                </span>
+              </div>
+              <div className="p-4 rounded-xl bg-[#FAF9F6] border border-outline-variant">
+                <span className="font-label-md text-[11px] text-secondary uppercase block">
+                  Availability
+                </span>
+                <span className="font-headline-md text-2xl font-bold text-primary block mt-1">
+                  {currentTask.bestCandidate.availabilityScore}%
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[#FAF9F6] border border-outline-variant space-y-2">
+              <div className="flex items-center gap-2 font-label-md text-xs font-bold text-primary">
+                <Icon name="auto_awesome" className="text-primary-container text-[16px]" />
+                <span>Explainable Match Logic</span>
+              </div>
+              <p className="font-body-sm text-xs text-secondary leading-relaxed">
+                {currentTask.bestCandidate.reasoning}
+              </p>
             </div>
           </div>
 
-          <div className="pt-lg border-t border-outline-variant/60 flex flex-col sm:flex-row gap-sm sm:items-center sm:justify-between">
-            <span className="font-body-sm text-body-sm text-secondary">
-              &copy; {new Date().getFullYear()} Equilibrium AI
-            </span>
-            <span className="font-body-sm text-body-sm text-secondary flex items-center gap-1.5">
-              <Icon name="lock" className="text-[14px]" />
-              Your data stays private and secure.
-            </span>
+          <div className="lg:col-span-5 bg-[#FAF9F6] border border-outline-variant rounded-xl p-6 space-y-6">
+            <h4 className="font-headline-sm text-sm font-bold text-primary pb-3 border-b border-outline-variant">
+              Post-Assignment Impact Projection
+            </h4>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs font-label-md mb-1.5">
+                  <span className="text-secondary">Current Utilization</span>
+                  <span className="font-bold text-primary">{currentTask.bestCandidate.currentLoad}%</span>
+                </div>
+                <div className="w-full h-2 bg-secondary-fixed/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-secondary rounded-full"
+                    style={{ width: `${currentTask.bestCandidate.currentLoad}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-label-md mb-1.5">
+                  <span className="text-primary font-bold">Projected with Task</span>
+                  <span className="font-bold text-primary-container">
+                    {currentTask.bestCandidate.newLoad}% (Optimal Band)
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-secondary-fixed/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary-container rounded-full"
+                    style={{ width: `${currentTask.bestCandidate.newLoad}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                to="/dashboard"
+                className="w-full bg-[#0052cc] hover:bg-[#0747a6] text-white font-label-md text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
+              >
+                <Icon name="check" className="text-[16px]" />
+                <span>Open in Team Workspace</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="scroll-mt-16 py-16 md:py-24 bg-surface-container-low/40 border-t border-outline-variant/60">
+        <div className="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop space-y-12">
+          <div className="text-center space-y-3">
+            <SectionLabel>Transparent Answers</SectionLabel>
+            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-primary">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq) => (
+              <details
+                key={faq.q}
+                className="group bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden card-shadow hover:border-primary transition-colors"
+              >
+                <summary className="flex items-center justify-between gap-4 p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <span className="font-headline-sm text-sm font-bold text-primary">{faq.q}</span>
+                  <Icon
+                    name="expand_more"
+                    className="text-[20px] text-secondary flex-shrink-0 transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <p className="px-6 pb-6 text-xs font-body-sm text-secondary leading-relaxed border-t border-outline-variant/40 pt-4">
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final Call to Action */}
+      <section className="py-20 md:py-28 px-margin-mobile md:px-margin-desktop">
+        <div className="max-w-container-max mx-auto bg-primary text-on-primary rounded-3xl p-10 md:p-16 text-center space-y-8 relative overflow-hidden shadow-2xl">
+          <div
+            className="absolute inset-0 pointer-events-none opacity-20"
+            style={{
+              backgroundImage:
+                "radial-gradient(40rem 20rem at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 80%)",
+            }}
+          />
+
+          <div className="relative max-w-2xl mx-auto space-y-4">
+            <h2 className="font-display-lg text-3xl sm:text-5xl font-bold tracking-tight">
+              Ready to balance your engineering organization?
+            </h2>
+            <p className="font-body-lg text-secondary-fixed text-base sm:text-lg leading-relaxed">
+              Launch our pre-seeded interactive demo with real engineering tasks and members in 1 click.
+              No credit card or setup required.
+            </p>
+          </div>
+
+          <div className="relative flex flex-wrap gap-4 justify-center">
+            <Link
+              to="/dashboard"
+              className="bg-surface-container-lowest hover:bg-surface text-primary font-label-md px-8 py-4 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 font-bold"
+            >
+              <span>Launch Live Workspace</span>
+              <Icon name="arrow_forward" className="text-[18px]" />
+            </Link>
+            <Link
+              to="/login"
+              className="border border-on-primary/40 hover:bg-on-primary/10 text-on-primary font-label-md px-8 py-4 rounded-xl transition-colors font-semibold"
+            >
+              <span>Sign In with Work Email</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Clean Footer */}
+      <footer className="w-full bg-[#FAF9F6] border-t border-outline-variant/60 py-12">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-8">
+            <div className="col-span-2 md:col-span-1 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-bold">
+                  <Icon name="balance" className="text-[18px]" filled />
+                </div>
+                <span className="font-headline-sm text-base font-bold text-primary">Equilibrium</span>
+              </div>
+              <p className="font-body-sm text-xs text-secondary leading-relaxed">
+                Autonomous workload intelligence, explainable fit scoring, and proactive burnout prevention for engineering teams.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+                Platform
+              </h5>
+              <ul className="space-y-2 text-xs font-body-sm text-secondary">
+                <li><Link to="/dashboard" className="hover:text-primary">Dashboard</Link></li>
+                <li><Link to="/workload" className="hover:text-primary">Team Workload</Link></li>
+                <li><Link to="/tasks" className="hover:text-primary">Task Directory</Link></li>
+                <li><Link to="/skill-matrix" className="hover:text-primary">Skill Matrix</Link></li>
+                <li><Link to="/burnout-risk" className="hover:text-primary">Burnout Risk</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+                Resources
+              </h5>
+              <ul className="space-y-2 text-xs font-body-sm text-secondary">
+                <li><a href="#features" className="hover:text-primary">Core Features</a></li>
+                <li><a href="#demo" className="hover:text-primary">Interactive Simulator</a></li>
+                <li><a href="#faq" className="hover:text-primary">FAQ</a></li>
+                <li><Link to="/about" className="hover:text-primary">Algorithm Model</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+                System Status
+              </h5>
+              <div className="flex items-center gap-2 text-xs font-label-md text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg w-fit">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>All Systems Operational</span>
+              </div>
+              <p className="text-[11px] text-secondary">Telemetry engine v2.4 running on Google Cloud.</p>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-outline-variant/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-body-sm text-secondary">
+            <span>&copy; {new Date().getFullYear()} Equilibrium AI Inc. All rights reserved.</span>
+            <div className="flex gap-6">
+              <Link to="/about" className="hover:text-primary">About & Scoring Specs</Link>
+              <Link to="/dashboard" className="hover:text-primary">App Workspace</Link>
+            </div>
           </div>
         </div>
       </footer>
