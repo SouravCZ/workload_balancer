@@ -118,7 +118,7 @@ export default function TeamMembers() {
   };
 
   return (
-    <main className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar">
+    <main tabIndex={0} aria-label="Team Members" className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar outline-none">
       <SectionHeading
         title="Team Members"
         description="Capacity, risk and skill coverage for every engineer."
@@ -208,7 +208,10 @@ export default function TeamMembers() {
             </div>
 
             <div
-              className={view === "list" ? "overflow-x-auto custom-scrollbar" : "hidden"}
+              tabIndex={0}
+              role="region"
+              aria-label="Team Members Table"
+              className={view === "list" ? "overflow-x-auto custom-scrollbar outline-none" : "hidden"}
             >
               <table className="w-full text-left border-collapse min-w-[720px]">
                 <thead>

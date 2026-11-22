@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "./ui";
 import Modal, { Button, ModalActions } from "./Modal";
 import { useTeamContext } from "../context/TeamContext";
@@ -84,6 +84,17 @@ export default function Topbar({
     warning: "bg-[#F5E6C8] text-[#6B4E12]",
     neutral: "bg-surface-container-high text-secondary",
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "?" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
+        e.preventDefault();
+        setDialog((prev) => (prev === "help" ? null : "help"));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <header className="w-full h-20 border-b border-outline-variant flex justify-between items-center px-lg flex-shrink-0 bg-surface z-10">

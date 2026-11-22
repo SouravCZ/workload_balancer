@@ -20,7 +20,7 @@ import {
 
 export default function About() {
   return (
-    <main className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar space-y-xl max-w-5xl">
+    <main tabIndex={0} aria-label="About Equilibrium" className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar space-y-xl max-w-5xl outline-none">
       <SectionHeading
         title="About Equilibrium"
         description="Architecture, mathematical formulas, and operational design of the Workload Balancer."
@@ -215,7 +215,7 @@ export default function About() {
                 Predicts task outcome quality on a 0–100 continuous scale. Captures that high skill proficiency cannot compensate for acute workload saturation (&gt;110% utilization).
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test R² = 0.979 (vs Heuristic R² = -0.539)
+                Test R² = 0.798 (Ridge Linear Baseline R² = 0.784)
               </div>
             </div>
 
@@ -227,7 +227,7 @@ export default function About() {
                 Estimates probability of delivering by the deadline based on task complexity, priority, collaboration dependencies, and schedule headroom.
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test ROC-AUC = 0.830 (vs Heuristic AUC = 0.563)
+                Test ROC-AUC = 0.845 (Logistic Regression ROC-AUC = 0.848)
               </div>
             </div>
 
@@ -239,7 +239,7 @@ export default function About() {
                 Detects probability of burnout manifestation within 4 weeks using sustained multi-week streaks, PTO gaps, overtime velocity, and concurrent critical load.
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test ROC-AUC = 0.886 · Calibrated Threshold = 0.35
+                Test ROC-AUC = 0.898 · Calibrated Threshold = 0.33 (Recall = 66.5%)
               </div>
             </div>
           </div>
@@ -250,10 +250,10 @@ export default function About() {
             </h4>
             <ul className="list-disc pl-lg space-y-xs">
               <li>
-                <strong className="text-primary">Leak-Free Group Partitioning:</strong> Data is partitioned by <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">member_id</code> using scikit-learn&apos;s <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">GroupShuffleSplit</code> (70% train / 15% validation / 15% test), ensuring no engineer appears across multiple splits.
+                <strong className="text-primary">Leak-Free Group Partitioning:</strong> Data is partitioned by <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">member_id</code> using scikit-learn&apos;s <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">GroupShuffleSplit</code> (70% train / 15% validation / 15% test), ensuring no engineer appears across multiple splits. Hyperparameter search is conducted strictly on train folds with GroupKFold.
               </li>
               <li>
-                <strong className="text-primary">Zero-Dependency In-Browser Inference:</strong> Model tree ensembles are serialized to lightweight JSON trees (<code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">src/models/*.json</code>, ~135 kB uncompressed). An embedded JavaScript inference engine evaluates predictions in &lt;0.05 ms per task with zero server roundtrips.
+                <strong className="text-primary">Zero-Dependency In-Browser Inference:</strong> Model tree ensembles are serialized to lightweight JSON trees (<code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">src/models/*.json</code>, ~171 kB uncompressed, 47.9 kB gzip). An embedded JavaScript inference engine evaluates predictions in median 0.010 ms (p95 0.028 ms) per task with zero server roundtrips.
               </li>
               <li>
                 <strong className="text-primary">Exact Mathematical Parity:</strong> Client inference is verified by automated regression tests against scikit-learn across 200 random test vectors, achieving &lt;10⁻⁴ floating-point parity.

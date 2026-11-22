@@ -60,7 +60,7 @@ export default function SkillMatrix() {
     : [];
 
   return (
-    <main className="flex-1 p-margin-mobile md:p-margin-desktop overflow-x-hidden max-w-[1600px] mx-auto w-full">
+    <main tabIndex={0} aria-label="Skill Matrix" className="flex-1 p-margin-mobile md:p-margin-desktop overflow-x-hidden max-w-[1600px] mx-auto w-full outline-none">
       <div className="mb-xl">
         <h2 className="font-headline-lg text-headline-lg text-on-background mb-sm">Skill Matrix</h2>
         <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">
@@ -123,7 +123,7 @@ export default function SkillMatrix() {
             </div>
           </div>
 
-          <div className="overflow-x-auto p-lg custom-scrollbar">
+          <div tabIndex={0} role="region" aria-label="Proficiency Matrix Table" className="overflow-x-auto p-lg custom-scrollbar outline-none">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-outline-variant/60 bg-surface-container-low/40">

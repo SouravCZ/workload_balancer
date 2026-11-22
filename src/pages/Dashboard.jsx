@@ -121,7 +121,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 flex min-w-0 min-h-0">
-      <main className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop min-w-0 custom-scrollbar">
+      <main tabIndex={0} aria-label="Dashboard Overview" className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop min-w-0 custom-scrollbar outline-none">
         <SectionHeading
           title="Team Operations Overview"
           description="Real-time capacity and task distribution insights."
@@ -233,7 +233,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg mb-xl">
           <Card className="p-lg lg:col-span-2 overflow-hidden">
             <h3 className="font-headline-sm text-headline-sm text-primary mb-lg">Task Assignments</h3>
-            <div className="overflow-x-auto -mx-lg px-lg">
+            <div tabIndex={0} role="region" aria-label="Task Assignments Table" className="overflow-x-auto -mx-lg px-lg outline-none">
               <table className="w-full text-left border-collapse min-w-[560px]">
                 <thead>
                   <tr className="border-b border-outline-variant">

@@ -163,7 +163,7 @@ export default function Insights() {
   };
 
   return (
-    <main className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar space-y-lg">
+    <main tabIndex={0} aria-label="Model Insights and Telemetry" className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar space-y-lg outline-none">
       <SectionHeading
         title="Insights"
         description="Turning team data into actionable intelligence and strategic recommendations."
@@ -542,7 +542,7 @@ export default function Insights() {
           </div>
           <div className="flex items-center gap-sm">
             <span className="text-xs text-on-surface-variant font-label-md bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/60">
-              Inference: &lt; 0.05 ms / eval
+              Inference: median 0.010 ms · p95 0.028 ms
             </span>
           </div>
         </div>
@@ -619,7 +619,7 @@ export default function Insights() {
                   Burnout Risk Classifier
                 </span>
                 <span className="text-[10px] bg-primary-container/15 text-primary-container px-1.5 py-0.5 rounded font-mono font-bold">
-                  Threshold: 0.35
+                  Threshold: {metricsData.burnout_risk["GradientBoosting (Candidate)"].Threshold.toFixed(2)}
                 </span>
               </div>
               <div className="mt-sm flex items-baseline gap-xs">
@@ -645,9 +645,9 @@ export default function Insights() {
           <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40">
             <div className="flex items-center justify-between mb-sm">
               <h4 className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold">
-                Burnout Classifier Confusion Matrix (Test Set: N = 1,511)
+                Burnout Classifier Confusion Matrix (Test Set: N = {metricsData.dataset?.test_rows || 1474})
               </h4>
-              <span className="text-[10px] text-secondary font-mono">Decision Threshold = 0.35</span>
+              <span className="text-[10px] text-secondary font-mono">Decision Threshold = {metricsData.burnout_risk["GradientBoosting (Candidate)"].Threshold.toFixed(2)}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-1 text-center font-mono text-xs mt-md">

@@ -17,7 +17,7 @@ Equilibrium replaces intuition-based assignment with an objective **hybrid dual-
 - **⚖️ Live Capacity & Workload Balancer (`/workload`)**: Real-time capacity tracking (contracted vs allocated hours) with automated rebalancing proposals that alleviate overloaded engineers while safeguarding receiver headroom.
 - **🎯 Multi-Attribute Task Fit (`/tasks`)**: Scores candidate-task assignments on multi-skill overlap depth (1–5 scale) and post-assignment availability headroom, with strict 4-tier deterministic tie-breaking.
 - **🛡️ Burnout Risk Fatigue Radar (`/burnout-risk`)**: Predicts exhaustion risk based on active overage, multi-week overload streaks, overtime velocity, and PTO recovery deficits.
-- **🧠 In-Browser ML Ensembles (`/insights`)**: Three client-side Gradient Boosting models evaluating continuous outcome quality ($R^2 = 0.979$), on-time delivery likelihood ($\text{ROC-AUC} = 0.830$), and burnout risk ($\text{ROC-AUC} = 0.886$) in `< 0.05 ms` per task without an external backend.
+- **🧠 In-Browser ML Ensembles (`/insights`)**: Three client-side Gradient Boosting models evaluating continuous outcome quality ($R^2 = 0.798$), on-time delivery likelihood ($\text{ROC-AUC} = 0.845$), and burnout risk ($\text{ROC-AUC} = 0.898$) in median `0.010 ms` (p95 `0.028 ms`) per task without an external backend. Dynamic `import()` bundles keep the main entry chunk at ~43 kB.
 - **🔍 Divergence Auditing (`MlVsHeuristicPanel`)**: Proactively flags and explains any assignment where the ML model and the deterministic heuristic diverge by $\ge 15\%$.
 - **📊 Executive Operations Reports (`/reports`)**: Filterable, exportable CSV reports and printer-friendly summaries with consolidated capacity metrics and ML intelligence breakdown.
 - **💾 Persistent State**: Session state automatically synchronizes to `localStorage` (`equilibrium_team_state_v1`) with full factory reset guardrails.
@@ -108,13 +108,13 @@ npm run test
 
 ## 📈 Model Performance Benchmark (Held-Out Test Set)
 
-Models are evaluated on a held-out test set ($N = 1,511$ assignments) partitioned strictly by `member_id` via `GroupShuffleSplit` (70% train / 15% validation / 15% test) to prevent cross-person data leakage:
+Models are evaluated on a held-out test set ($N = 1,474$ assignments) partitioned strictly by `member_id` via `GroupShuffleSplit` (70% train / 15% validation / 15% test) to prevent cross-person data leakage:
 
-| Target Model | Baseline Metric | Equilibrium ML (Gradient Boosting) | Lift / Performance |
-| :--- | :--- | :--- | :--- |
-| **Outcome Quality** (0–100) | Heuristic $R^2 = -0.539$ | **$R^2 = 0.979$, MAE = 2.99** | **+1.518 $R^2$ pts** |
-| **On-Time Delivery** (0/1) | Heuristic ROC-AUC = 0.563 | **ROC-AUC = 0.830, F1 = 81.1%, Acc = 76.9%** | **+0.267 AUC pts** |
-| **Burnout Risk** (0/1) | Heuristic ROC-AUC = 0.548 | **ROC-AUC = 0.886, PR-AUC = 0.697, F1 = 64.2%** | **+0.338 AUC pts** |
+| Target Model | Baseline Metric | Linear Baseline | Equilibrium ML (Gradient Boosting) | Baseline Comparison / Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Outcome Quality** (0–100) | Heuristic $R^2 = -0.464$ (Spearman $\rho = 0.700$) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
+| **On-Time Delivery** (0/1) | Heuristic ROC-AUC = 0.802 (Spearman $\rho = 0.515$) | Logistic ROC-AUC = 0.848, Acc = 78.2% | **ROC-AUC = 0.845, F1 = 81.5%, Acc = 77.7%** | Logistic regression marginally exceeds Gradient Boosting ($-0.003$ AUC) |
+| **Burnout Risk** (0/1) | Heuristic ROC-AUC = 0.763 (Spearman $\rho = 0.378$) | Logistic ROC-AUC = 0.895, PR-AUC = 0.736 | **ROC-AUC = 0.898, PR-AUC = 0.726, F1 = 66.1%** | Calibrated threshold = 0.330 (Recall = 66.5%, Precision = 65.6%) |
 
 ---
 

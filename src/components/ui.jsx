@@ -123,6 +123,7 @@ export function UtilizationBar({ utilization, className = "", showOverflow = tru
     <div
       className={`w-full h-2 bg-secondary-container rounded-full overflow-hidden ${className}`}
       role="progressbar"
+      aria-label={`Workload utilization: ${pct}%`}
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}

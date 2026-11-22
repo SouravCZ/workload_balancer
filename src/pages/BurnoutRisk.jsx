@@ -107,7 +107,7 @@ export default function BurnoutRisk() {
       : "";
 
   return (
-    <main className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar">
+    <main tabIndex={0} aria-label="Burnout Risk Radar" className="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto custom-scrollbar outline-none">
       <div className="mb-xl">
         <h2 className="font-headline-lg text-headline-lg text-primary md:text-display-lg">
           Burnout Risk
@@ -162,7 +162,7 @@ export default function BurnoutRisk() {
             <h3 className="font-body-md font-semibold text-primary">Team Comparison</h3>
             <Chip tone="outline">Ranked by severity</Chip>
           </div>
-          <div className="overflow-x-auto custom-scrollbar">
+          <div tabIndex={0} role="region" aria-label="Team comparison table" className="overflow-x-auto custom-scrollbar outline-none">
             <table className="w-full text-left border-collapse min-w-[640px]">
               <thead>
                 <tr className="bg-surface-container-low border-b border-outline-variant">

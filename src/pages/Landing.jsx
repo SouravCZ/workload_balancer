@@ -117,7 +117,7 @@ export default function Landing() {
   const currentTask = interactiveTasks[selectedTaskIdx];
 
   return (
-    <div className="min-h-screen bg-white text-[#172b4d] font-body-md antialiased selection:bg-[#deebff] selection:text-[#0052cc]">
+    <div className="min-h-screen bg-white text-[#172b4d] font-body-md antialiased selection:bg-[#deebff] selection:text-[#0052cc] overflow-x-hidden">
       {/* Top Banner Announcement */}
       {showBanner && (
         <div className="bg-[#deebff]/70 border-b border-[#b3d4ff] text-[#091e42] py-2 px-4 text-xs font-medium flex items-center justify-center relative z-50">
@@ -489,7 +489,7 @@ export default function Landing() {
                     {/* Skill ratings pill row */}
                     <div className="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono">
                       <div className="p-1 rounded bg-[#31433b] text-white font-bold" title="Node.js: Level 5">Node.js [5]</div>
-                      <div className="p-1 rounded bg-[#6b8a7c] text-white font-medium" title="API Design: Level 4">API [4]</div>
+                      <div className="p-1 rounded bg-[#375344] text-white font-medium" title="API Design: Level 4">API [4]</div>
                       <div className="p-1 rounded bg-[#b3ccc0] text-[#091f18]" title="SQL: Level 3">SQL [3]</div>
                       <div className="p-1 rounded bg-[#d3e7dc] text-[#384b42]" title="React: Level 2">React [2]</div>
                     </div>

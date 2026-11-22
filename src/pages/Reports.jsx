@@ -177,7 +177,7 @@ export default function Reports() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handlePrint = () => {
@@ -185,7 +185,7 @@ export default function Reports() {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar space-y-xl">
+    <main tabIndex={0} aria-label="Executive Reports" className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar space-y-xl outline-none">
       {/* Scoped print styles hiding navigation & toolbars */}
       <style>{`
         @media print {
@@ -356,7 +356,7 @@ export default function Reports() {
                 ML Telemetry Breakdown
               </span>
               <span className="text-xs text-secondary font-label-md">
-                In-browser Gradient Boosting · Latency &lt; 0.05ms
+                In-browser Gradient Boosting · Latency median 0.010ms (p95 0.028ms)
               </span>
             </div>
             <h3 className="font-headline-sm text-sm font-bold text-primary mt-1">
@@ -380,7 +380,7 @@ export default function Reports() {
               <span className="text-xs text-secondary">/ 100</span>
             </div>
             <p className="text-[11px] text-secondary mt-1 font-body-sm">
-              Across {mlReportStats.assignedCount} assigned sprint tasks (test R² = 0.979)
+              Across {mlReportStats.assignedCount} assigned sprint tasks (test R² = 0.798)
             </p>
           </div>
 
@@ -394,7 +394,7 @@ export default function Reports() {
               </span>
             </div>
             <p className="text-[11px] text-secondary mt-1 font-body-sm">
-              Evaluated against complexity and schedule headroom (ROC-AUC = 0.830)
+              Evaluated against complexity and schedule headroom (ROC-AUC = 0.845)
             </p>
           </div>
 
@@ -409,7 +409,7 @@ export default function Reports() {
               <span className="text-xs text-secondary">/ {filteredMembers.length} engineers</span>
             </div>
             <p className="text-[11px] text-secondary mt-1 font-body-sm">
-              Model threshold P &ge; 0.35 (ROC-AUC = 0.886, Recall = 65.9%)
+              Model threshold P &ge; 0.33 (ROC-AUC = 0.898, Recall = 66.5%)
             </p>
           </div>
         </div>
@@ -644,7 +644,7 @@ export default function Reports() {
           icon="verified"
         />
 
-        <div className="mt-md overflow-x-auto">
+        <div tabIndex={0} role="region" aria-label="Task Allocations Table" className="mt-md overflow-x-auto outline-none">
           <table className="w-full text-left border-collapse text-body-sm">
             <thead>
               <tr className="border-b border-outline-variant font-label-md text-xs text-secondary uppercase tracking-wider">

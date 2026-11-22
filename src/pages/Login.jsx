@@ -226,7 +226,7 @@ export default function Login() {
 
             <div className="flex items-center gap-md my-xl">
               <div className="h-px bg-outline-variant/40 flex-grow" />
-              <span className="font-body-sm text-body-sm text-secondary/70 text-xs uppercase tracking-wider">
+              <span className="font-body-sm text-body-sm text-secondary font-medium text-xs uppercase tracking-wider">
                 Or continue with
               </span>
               <div className="h-px bg-outline-variant/40 flex-grow" />

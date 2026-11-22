@@ -188,7 +188,7 @@ export default function Tasks() {
 
   return (
     <div className="flex-1 flex min-w-0 min-h-0">
-      <main className="flex-1 p-margin-mobile md:p-margin-desktop flex flex-col gap-lg min-w-0 overflow-y-auto custom-scrollbar">
+      <main tabIndex={0} aria-label="Task Management" className="flex-1 p-margin-mobile md:p-margin-desktop flex flex-col gap-lg min-w-0 overflow-y-auto custom-scrollbar outline-none">
         <SectionHeading
           title="Tasks"
           description="Manage workload and assign tasks intelligently."
@@ -296,11 +296,10 @@ export default function Tasks() {
               const risk = owner ? calculateBurnoutRisk(owner).riskTier : null;
               const isSelected = selected?.id === task.id;
               return (
-                <button
+                <div
                   key={task.id}
-                  type="button"
                   onClick={() => setSelectedId(task.id)}
-                  className={`w-full grid grid-cols-12 gap-md px-md py-md items-center border-b border-outline-variant text-left transition-colors ${
+                  className={`w-full grid grid-cols-12 gap-md px-md py-md items-center border-b border-outline-variant text-left transition-colors cursor-pointer ${
                     isSelected ? "bg-surface-container/40" : "hover:bg-surface-container-low"
                   }`}
                 >
@@ -389,7 +388,7 @@ export default function Tasks() {
                       title={risk ?? "Unassigned"}
                     />
                   </div>
-                </button>
+                </div>
               );
             })}
             {visible.length === 0 ? (

@@ -69,7 +69,7 @@ export default function WorkloadView() {
   );
 
   return (
-    <main className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar">
+    <main tabIndex={0} aria-label="Team Workload" className="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop custom-scrollbar outline-none">
       <SectionHeading
         title="Team Workload"
         description="Live capacity utilisation per member with transferable task suggestions."

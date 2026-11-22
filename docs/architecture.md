@@ -5,7 +5,7 @@
 
 The system features a **hybrid dual-scoring architecture**:
 1. **Deterministic Heuristic Engine**: Transparent, auditable mathematical formulas providing clear upper/lower bounds and invariant guarantees for workload balancing and rebalancing proposals.
-2. **In-Browser Machine Learning Ensembles**: Lightweight Gradient Boosting tree ensembles (~135 kB JSON total) evaluated directly in JavaScript in `< 0.05 ms` per assignment to predict continuous task quality (0–100), binary on-time delivery likelihood, and 4-week burnout manifestation risk.
+2. **In-Browser Machine Learning Ensembles**: Lightweight Gradient Boosting tree ensembles (~171 kB JSON models, 47.9 kB gzip) evaluated directly in JavaScript in median `0.010 ms` (p95 `0.028 ms`) per assignment to predict continuous task quality (0–100), binary on-time delivery likelihood, and 4-week burnout manifestation risk. Models are lazy-loaded via dynamic `import()`.
 3. **Divergence Auditing**: The `MlVsHeuristicPanel` flags any assignment where ML and heuristic predictions diverge by $\ge 15\%$, explaining latent friction factors (overtime trends, PTO deficits, or capacity saturation).
 
 ---
@@ -86,16 +86,17 @@ $$\text{RiskScore} = \min(100, \text{round}(180 \times \text{Overage} + 12 \time
 - **Leak-Free Partitioning**: Split strictly by `member_id` via `GroupShuffleSplit` (70% Train, 15% Validation, 15% Test). No individual appears in multiple splits.
 - **Ensemble Architecture**: Scikit-learn Pipeline with `SimpleImputer(strategy='median')`, `StandardScaler()`, and `GradientBoostingRegressor` / `GradientBoostingClassifier` (`n_estimators=75`, `max_depth=3`, `learning_rate=0.08`).
 
-#### Benchmark Comparison Table (Held-Out Test Set, N = 1,511)
-| Model Target | Baseline Metric | Candidate (Gradient Boosting) Metric | Improvement |
-| :--- | :--- | :--- | :--- |
-| **Outcome Quality** | Heuristic $R^2 = -0.539$, MAE = 28.67 | **$R^2 = 0.979$, MAE = 2.99, RMSE = 3.78** | **+1.518 $R^2$ pts** |
-| **On-Time Delivery** | Heuristic ROC-AUC = 0.563, F1 = 0.234 | **ROC-AUC = 0.830, F1 = 0.811, Acc = 76.9%** | **+0.267 AUC pts** |
-| **Burnout Risk** | Heuristic ROC-AUC = 0.548, PR-AUC = 0.186 | **ROC-AUC = 0.886, PR-AUC = 0.697, F1 = 0.642** | **+0.338 AUC pts** |
+#### Benchmark Comparison Table (Held-Out Test Set, N = 1,474)
+| Model Target | Baseline Metric | Linear Baseline | Candidate (Gradient Boosting) Metric | Comparison / Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Outcome Quality** | Heuristic $R^2 = -0.464$ (Spearman $\rho = 0.700$) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13, RMSE = 12.64** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
+| **On-Time Delivery** | Heuristic ROC-AUC = 0.802 (Spearman $\rho = 0.515$) | Logistic ROC-AUC = 0.848, Acc = 78.2% | **ROC-AUC = 0.845, F1 = 0.815, Acc = 77.7%** | Logistic regression slightly outperforms Gradient Boosting ($-0.003$ AUC) |
+| **Burnout Risk** | Heuristic ROC-AUC = 0.763 (Spearman $\rho = 0.378$) | Logistic ROC-AUC = 0.895, PR-AUC = 0.736 | **ROC-AUC = 0.898, PR-AUC = 0.726, F1 = 0.661** | Calibrated threshold = 0.330 (Recall = 66.5%, Precision = 65.6%) |
 
 ### 4.3 In-Browser Client Inference (`src/services/mlModel.js`)
-- Models are serialized to pure JSON trees and bundled statically.
-- Single tree traversal executes in microseconds; full 75-tree boosting evaluation takes `< 0.05 ms`.
+- Models are serialized to pure JSON trees and lazy-loaded on demand via dynamic `import()`.
+- Model JSON bundle size: 171.1 kB raw (47.9 kB gzip).
+- Single tree traversal executes in microseconds; full ensemble evaluation takes median `0.010 ms` (p95 `0.028 ms`).
 - Exact floating-point parity verified by automated regression test (`src/services/mlModel.test.js`) across 200 random test vectors ($< 10^{-4}$ tolerance).
 
 ---

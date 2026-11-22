@@ -123,6 +123,13 @@ export function TeamProvider({ children }) {
     }
   };
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__resetEquilibriumDefaults = resetToDefaults;
+      window.__applyAllProposals = applyAllProposals;
+    }
+  }, [applyAllProposals]);
+
   return (
     <TeamContext.Provider
       value={{
