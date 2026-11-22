@@ -231,7 +231,9 @@ def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000):
         # Tight deadline stress penalty
         tight_deadline_penalty = 6.0 if hours_to_deadline_ratio > 1.2 else 0.0
 
-        raw_quality = base_quality - overload_fatigue_penalty - context_switching_penalty - tight_deadline_penalty + rng.normal(0, 3.5)
+        # Unobserved real-world engineering friction (technical debt, dependency churn, interruptions)
+        unobserved_factors = rng.normal(0, 13.5)
+        raw_quality = base_quality - overload_fatigue_penalty - context_switching_penalty - tight_deadline_penalty + unobserved_factors
         outcome_quality = float(np.clip(raw_quality, 0.0, 100.0))
 
         # Target 2: on_time (0 or 1)
@@ -243,6 +245,7 @@ def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000):
             + (1.2 * skill_coverage_ratio)
             + (0.35 * seniority_vs_complexity)
             - (0.6 * max(0, concurrent_task_count - 3))
+            + rng.normal(0, 0.4)
         )
         p_on_time = sigmoid(on_time_logit)
         on_time = 1 if rng.rand() < p_on_time else 0
@@ -258,17 +261,18 @@ def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000):
         trend_factor = max(0.0, overtime_trend * 0.08)
 
         burnout_logit = (
-            -6.4
+            -6.55
             + (4.2 * overage_factor)
             + (2.6 * streak_factor)
             + (0.35 * priority)
             + (0.4 * trend_factor)
             - (1.5 * pto_protection)
             + (0.25 if concurrent_task_count >= 5 else 0.0)
+            + rng.normal(0, 0.35)
         )
         p_burnout = sigmoid(burnout_logit)
         burnout_flag = 1 if rng.rand() < p_burnout else 0
-        if rng.rand() < 0.02:
+        if rng.rand() < 0.03:
             burnout_flag = 1 - burnout_flag
 
         assignments.append({

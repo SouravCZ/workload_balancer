@@ -1,13 +1,67 @@
 import { buildFeatureVector } from "../utils/featureBuilder";
 import { calculateFitScore, calculateRiskScore } from "../utils/scoring";
 
-import modelQuality from "../models/model_quality.json";
-import modelOntime from "../models/model_ontime.json";
-import modelBurnout from "../models/model_burnout.json";
-import featureSchema from "../models/feature_schema.json";
-import metricsData from "../models/metrics.json";
+// Static references for dynamic loading
+let modelsPromise = null;
+let modelsCache = null;
+let loadFailed = false;
 
-export { modelQuality, modelOntime, modelBurnout, featureSchema, metricsData };
+/**
+ * Lazy loads the JSON model bundle via dynamic import()
+ */
+export async function loadModels() {
+  if (modelsCache) return modelsCache;
+  if (loadFailed) return null;
+
+  if (!modelsPromise) {
+    modelsPromise = Promise.all([
+      import("../models/model_quality.json"),
+      import("../models/model_ontime.json"),
+      import("../models/model_burnout.json"),
+      import("../models/metrics.json"),
+      import("../models/feature_schema.json"),
+    ])
+      .then(([qualityMod, ontimeMod, burnoutMod, metricsMod, schemaMod]) => {
+        modelsCache = {
+          quality: qualityMod.default ?? qualityMod,
+          ontime: ontimeMod.default ?? ontimeMod,
+          burnout: burnoutMod.default ?? burnoutMod,
+          metrics: metricsMod.default ?? metricsMod,
+          schema: schemaMod.default ?? schemaMod,
+          loaded: true,
+        };
+        loadFailed = false;
+        return modelsCache;
+      })
+      .catch((err) => {
+        loadFailed = true;
+        console.warn("ML model bundle loading fallback to heuristic:", err);
+        return null;
+      });
+  }
+  return modelsPromise;
+}
+
+export function hasModelLoadFailed() {
+  return loadFailed;
+}
+
+export function areModelsLoaded() {
+  return modelsCache !== null && modelsCache.loaded === true;
+}
+
+export function getCachedModels() {
+  return modelsCache;
+}
+
+/**
+ * For testing: simulates model load failures and resets internal state
+ */
+export function _resetModelsForTesting({ fail = false, mockBundle = null } = {}) {
+  modelsPromise = null;
+  modelsCache = mockBundle;
+  loadFailed = fail;
+}
 
 /**
  * Traverses a single serialized decision tree
@@ -44,7 +98,6 @@ export function predictEnsemble(model, rawFeatureDict) {
     if (val === undefined || val === null || isNaN(val)) {
       val = medians[i];
     }
-    // Scale: (val - mean) / scale
     return (val - means[i]) / scales[i];
   });
 
@@ -57,7 +110,6 @@ export function predictEnsemble(model, rawFeatureDict) {
 
   // 3. Format output based on model type
   if (model.is_classifier || model.model_type === "classifier") {
-    // Sigmoid probability
     const prob = 1 / (1 + Math.exp(-rawScore));
     const threshold = model.optimal_threshold ?? 0.5;
     return {
@@ -73,37 +125,32 @@ export function predictEnsemble(model, rawFeatureDict) {
   };
 }
 
-/** Synchronously checks if models are loaded */
-export function areModelsLoaded() {
-  return true;
-}
-
 /**
- * Synchronous task fit predictor
+ * Asynchronous task fit predictor with dynamic model bundle loading and graceful heuristic fallback
  */
-export function predictTaskFit(member, task, allMembers = [], allTasks = []) {
-  const tasksList = Array.isArray(allTasks) && allTasks.length > 0 
-    ? allTasks 
-    : (Array.isArray(allMembers) ? allMembers : []);
+export async function scoreCandidateML(member, task, allTasks = []) {
+  const models = await loadModels();
+  const tasksList = Array.isArray(allTasks) ? allTasks : [];
   const features = buildFeatureVector(member, task, tasksList);
 
-  if (!features) {
+  if (!models || !features) {
     const heuristic = calculateFitScore(member, task);
     return {
       isMl: false,
+      loadFailed: loadFailed || !models,
       mlQuality: Math.round(heuristic.fitScore * 100),
       qualityScore: Math.round(heuristic.fitScore * 100),
       mlFitScore: heuristic.fitScore,
-      mlOnTimeProb: 0.85,
-      onTimeProbability: 0.85,
+      mlOnTimeProb: 0.80,
+      onTimeProbability: 0.80,
       isLikelyOnTime: true,
       features: null,
-      disclaimer: "Running heuristic fallback",
+      disclaimer: "Heuristic fallback active (ML model bundle unavailable)",
     };
   }
 
-  const qualityRes = predictEnsemble(modelQuality, features);
-  const ontimeRes = predictEnsemble(modelOntime, features);
+  const qualityRes = predictEnsemble(models.quality, features);
+  const ontimeRes = predictEnsemble(models.ontime, features);
 
   const rawQuality = qualityRes?.prediction ?? 70.0;
   const clampedQuality = Math.max(0, Math.min(100, Math.round(rawQuality)));
@@ -112,6 +159,7 @@ export function predictTaskFit(member, task, allMembers = [], allTasks = []) {
 
   return {
     isMl: true,
+    loadFailed: false,
     mlQuality: clampedQuality,
     qualityScore: clampedQuality,
     mlFitScore,
@@ -124,33 +172,33 @@ export function predictTaskFit(member, task, allMembers = [], allTasks = []) {
 }
 
 /**
- * Synchronous burnout predictor
+ * Asynchronous member burnout predictor with dynamic model bundle loading and graceful heuristic fallback
  */
-export function predictBurnout(member, allMembers = [], allTasks = []) {
-  const tasksList = Array.isArray(allTasks) && allTasks.length > 0 
-    ? allTasks 
-    : (Array.isArray(allMembers) ? allMembers : []);
+export async function predictMemberBurnoutML(member, allTasks = []) {
+  const models = await loadModels();
+  const tasksList = Array.isArray(allTasks) ? allTasks : [];
   const dummyTask = { estimatedHours: 0, requiredSkills: [], priority: "Medium" };
   const features = buildFeatureVector(member, dummyTask, tasksList);
 
-  if (!features) {
+  if (!models || !features) {
     const heuristic = calculateRiskScore(member);
     return {
       isMl: false,
+      loadFailed: loadFailed || !models,
       burnoutProbability: heuristic.score / 100,
       riskTier: heuristic.tier,
       isHighRisk: heuristic.tier === "High",
       isElevated: heuristic.tier === "High" || heuristic.tier === "Medium",
-      threshold: 0.35,
+      threshold: 0.33,
       topFactors: [`Streak: ${heuristic.streakWeeks} weeks over capacity`],
       features: null,
-      disclaimer: "Running heuristic fallback",
+      disclaimer: "Heuristic fallback active (ML model bundle unavailable)",
     };
   }
 
-  const boRes = predictEnsemble(modelBurnout, features);
+  const boRes = predictEnsemble(models.burnout, features);
   const prob = boRes?.probability ?? 0.15;
-  const threshold = boRes?.threshold ?? modelBurnout.optimal_threshold ?? 0.35;
+  const threshold = boRes?.threshold ?? models.burnout.optimal_threshold ?? 0.33;
   const isElevated = prob >= threshold;
   const isHighRisk = prob >= 0.65;
 
@@ -179,6 +227,8 @@ export function predictBurnout(member, allMembers = [], allTasks = []) {
   }
 
   return {
+    isMl: true,
+    loadFailed: false,
     burnoutProbability: prob,
     isElevated,
     isHighRisk,
@@ -191,19 +241,130 @@ export function predictBurnout(member, allMembers = [], allTasks = []) {
 }
 
 /**
- * Async wrapper for candidate task assignment scoring
+ * Synchronous task fit predictor using cached models or heuristic fallback
  */
-export async function scoreCandidateML(member, task, allTasks = []) {
-  return predictTaskFit(member, task, [], allTasks);
+export function predictTaskFit(member, task, allMembers = [], allTasks = []) {
+  const tasksList = Array.isArray(allTasks) && allTasks.length > 0 
+    ? allTasks 
+    : (Array.isArray(allMembers) ? allMembers : []);
+  const features = buildFeatureVector(member, task, tasksList);
+
+  if (!modelsCache || !features) {
+    // Trigger lazy background load if not loaded yet
+    if (!modelsCache && !loadFailed && !modelsPromise) {
+      loadModels();
+    }
+    const heuristic = calculateFitScore(member, task);
+    return {
+      isMl: false,
+      loadFailed,
+      mlQuality: Math.round(heuristic.fitScore * 100),
+      qualityScore: Math.round(heuristic.fitScore * 100),
+      mlFitScore: heuristic.fitScore,
+      mlOnTimeProb: 0.80,
+      onTimeProbability: 0.80,
+      isLikelyOnTime: true,
+      features: null,
+      disclaimer: "Heuristic fallback active (ML models loading or unavailable)",
+    };
+  }
+
+  const qualityRes = predictEnsemble(modelsCache.quality, features);
+  const ontimeRes = predictEnsemble(modelsCache.ontime, features);
+
+  const rawQuality = qualityRes?.prediction ?? 70.0;
+  const clampedQuality = Math.max(0, Math.min(100, Math.round(rawQuality)));
+  const mlFitScore = clampedQuality / 100;
+  const mlOnTimeProb = ontimeRes?.probability ?? 0.80;
+
+  return {
+    isMl: true,
+    loadFailed: false,
+    mlQuality: clampedQuality,
+    qualityScore: clampedQuality,
+    mlFitScore,
+    mlOnTimeProb,
+    onTimeProbability: mlOnTimeProb,
+    isLikelyOnTime: ontimeRes?.isPositive ?? true,
+    features,
+    disclaimer: "Trained on synthetic telemetry demonstration data",
+  };
 }
 
 /**
- * Async wrapper for member burnout prediction
+ * Synchronous burnout predictor using cached models or heuristic fallback
  */
-export async function predictMemberBurnoutML(member, allTasks = []) {
-  return predictBurnout(member, [], allTasks);
+export function predictBurnout(member, allMembers = [], allTasks = []) {
+  const tasksList = Array.isArray(allTasks) && allTasks.length > 0 
+    ? allTasks 
+    : (Array.isArray(allMembers) ? allMembers : []);
+  const dummyTask = { estimatedHours: 0, requiredSkills: [], priority: "Medium" };
+  const features = buildFeatureVector(member, dummyTask, tasksList);
+
+  if (!modelsCache || !features) {
+    if (!modelsCache && !loadFailed && !modelsPromise) {
+      loadModels();
+    }
+    const heuristic = calculateRiskScore(member);
+    return {
+      isMl: false,
+      loadFailed,
+      burnoutProbability: heuristic.score / 100,
+      riskTier: heuristic.tier,
+      isHighRisk: heuristic.tier === "High",
+      isElevated: heuristic.tier === "High" || heuristic.tier === "Medium",
+      threshold: 0.33,
+      topFactors: [`Streak: ${heuristic.streakWeeks} weeks over capacity`],
+      features: null,
+      disclaimer: "Heuristic fallback active (ML models loading or unavailable)",
+    };
+  }
+
+  const boRes = predictEnsemble(modelsCache.burnout, features);
+  const prob = boRes?.probability ?? 0.15;
+  const threshold = boRes?.threshold ?? modelsCache.burnout.optimal_threshold ?? 0.33;
+  const isElevated = prob >= threshold;
+  const isHighRisk = prob >= 0.65;
+
+  let riskTier = "Low";
+  if (prob >= threshold) {
+    riskTier = isHighRisk ? "High" : "Medium";
+  } else if (prob >= 0.20) {
+    riskTier = "Medium";
+  }
+
+  const topFactors = [];
+  if (features.overload_streak_weeks >= 2) {
+    topFactors.push(`${features.overload_streak_weeks}-week overtime streak (>100%)`);
+  }
+  if (features.current_utilization > 1.0) {
+    topFactors.push(`Current allocation at ${Math.round(features.current_utilization * 100)}% capacity`);
+  }
+  if (features.recent_pto_days < 2) {
+    topFactors.push("Low recent recovery buffer (<2 PTO days)");
+  }
+  if (features.overtime_trend > 0) {
+    topFactors.push("Upward trajectory in weekly overtime");
+  }
+  if (topFactors.length === 0) {
+    topFactors.push("Normal capacity distribution without sustained fatigue markers");
+  }
+
+  return {
+    isMl: true,
+    loadFailed: false,
+    burnoutProbability: prob,
+    isElevated,
+    isHighRisk,
+    riskTier,
+    threshold,
+    topFactors,
+    features,
+    disclaimer: "Trained on synthetic telemetry demonstration data",
+  };
 }
 
 export async function getMLMetrics() {
-  return metricsData;
+  const models = await loadModels();
+  return models?.metrics ?? null;
 }

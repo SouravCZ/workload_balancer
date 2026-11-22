@@ -1,20 +1,33 @@
-import { useMemo } from "react";
+import React, { lazy, Suspense, useMemo } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { TeamProvider, useTeamContext } from "./context/TeamContext";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
-import Dashboard from "./pages/Dashboard";
-import WorkloadView from "./pages/WorkloadView";
-import Tasks from "./pages/Tasks";
-import TeamMembers from "./pages/TeamMembers";
-import SkillMatrix from "./pages/SkillMatrix";
-import BurnoutRisk from "./pages/BurnoutRisk";
-import Insights from "./pages/Insights";
-import Reports from "./pages/Reports";
-import About from "./pages/About";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
 import { calculateRiskScore } from "./utils/scoring";
+
+// Lazy-loaded routes for code splitting
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const WorkloadView = lazy(() => import("./pages/WorkloadView"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const TeamMembers = lazy(() => import("./pages/TeamMembers"));
+const SkillMatrix = lazy(() => import("./pages/SkillMatrix"));
+const BurnoutRisk = lazy(() => import("./pages/BurnoutRisk"));
+const Insights = lazy(() => import("./pages/Insights"));
+const Reports = lazy(() => import("./pages/Reports"));
+const About = lazy(() => import("./pages/About"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
+
+function RouteLoading() {
+  return (
+    <div className="flex-1 flex items-center justify-center p-xl text-secondary font-body-sm min-h-[300px]">
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse" />
+        <span>Loading view...</span>
+      </div>
+    </div>
+  );
+}
 
 function AppLayout({ children, search, onSearch, searchPlaceholder }) {
   const { members } = useTeamContext();
@@ -48,7 +61,7 @@ function AppLayout({ children, search, onSearch, searchPlaceholder }) {
           searchValue={search}
           onSearch={onSearch}
         />
-        {children}
+        <Suspense fallback={<RouteLoading />}>{children}</Suspense>
       </div>
     </div>
   );
@@ -76,91 +89,93 @@ export default function App() {
   return (
     <TeamProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <AppLayout>
-                <Dashboard />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/workload"
-            element={
-              <AppLayout>
-                <WorkloadView />
-              </AppLayout>
-            }
-          />
-          <Route path="/workload-view" element={<Navigate to="/workload" replace />} />
-          <Route
-            path="/tasks"
-            element={
-              <AppLayout>
-                <Tasks />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/team-members"
-            element={
-              <AppLayout>
-                <TeamMembers />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/skill-matrix"
-            element={
-              <AppLayout>
-                <SkillMatrix />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/burnout-risk"
-            element={
-              <AppLayout>
-                <BurnoutRisk />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/insights"
-            element={
-              <AppLayout>
-                <Insights />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <AppLayout>
-                <Reports />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <AppLayout>
-                <About />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <AppLayout>
-                <NotFound />
-              </AppLayout>
-            }
-          />
-        </Routes>
+        <Suspense fallback={<RouteLoading />}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/workload"
+              element={
+                <AppLayout>
+                  <WorkloadView />
+                </AppLayout>
+              }
+            />
+            <Route path="/workload-view" element={<Navigate to="/workload" replace />} />
+            <Route
+              path="/tasks"
+              element={
+                <AppLayout>
+                  <Tasks />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/team-members"
+              element={
+                <AppLayout>
+                  <TeamMembers />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/skill-matrix"
+              element={
+                <AppLayout>
+                  <SkillMatrix />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/burnout-risk"
+              element={
+                <AppLayout>
+                  <BurnoutRisk />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/insights"
+              element={
+                <AppLayout>
+                  <Insights />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <AppLayout>
+                  <Reports />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <AppLayout>
+                  <About />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <AppLayout>
+                  <NotFound />
+                </AppLayout>
+              }
+            />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TeamProvider>
   );
