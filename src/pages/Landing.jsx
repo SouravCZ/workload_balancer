@@ -346,7 +346,7 @@ export default function Landing() {
                     className="w-full px-4 py-3 rounded-xl border border-[#dfe1e6] text-[#172b4d] placeholder-[#8590a2] focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 outline-none text-base bg-white transition-all shadow-inner"
                   />
                   <p className="text-xs text-[#626f86] mt-2">
-                    Use a work email to find teammates and get access to Equilibrium AI
+                    Interactive Demo Sandbox — Enter any email or proceed directly with one click
                   </p>
                 </div>
 
@@ -354,7 +354,7 @@ export default function Landing() {
                   type="submit"
                   className="w-full py-3.5 px-6 rounded-full bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-base shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Sign up</span>
+                  <span>Enter Interactive Demo</span>
                 </button>
 
                 <div className="relative my-4 flex items-center justify-center">
@@ -374,7 +374,7 @@ export default function Landing() {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                   </svg>
-                  <span>Google</span>
+                  <span>Google (Demo Sandbox)</span>
                 </Link>
               </form>
             </div>

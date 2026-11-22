@@ -1,0 +1,137 @@
+{
+  "skill_match_score": {
+    "type": "float",
+    "range": [
+      0.0,
+      1.0
+    ],
+    "unit": "ratio",
+    "desc": "Weighted match of candidate skills to required levels"
+  },
+  "skill_gap_max": {
+    "type": "int",
+    "range": [
+      0,
+      5
+    ],
+    "unit": "levels",
+    "desc": "Maximum deficit between member proficiency and required level"
+  },
+  "skill_coverage_ratio": {
+    "type": "float",
+    "range": [
+      0.0,
+      1.0
+    ],
+    "unit": "ratio",
+    "desc": "Proportion of required skills fully satisfied"
+  },
+  "current_utilization": {
+    "type": "float",
+    "range": [
+      0.0,
+      3.0
+    ],
+    "unit": "ratio",
+    "desc": "Current allocated hours divided by weekly capacity"
+  },
+  "projected_utilization_after_assign": {
+    "type": "float",
+    "range": [
+      0.0,
+      3.5
+    ],
+    "unit": "ratio",
+    "desc": "Projected utilization if task is assigned"
+  },
+  "task_hours_to_headroom_ratio": {
+    "type": "float",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "ratio",
+    "desc": "Task hours divided by available headroom hours"
+  },
+  "hours_to_deadline_ratio": {
+    "type": "float",
+    "range": [
+      0.0,
+      10.0
+    ],
+    "unit": "ratio",
+    "desc": "Task hours divided by working hours before deadline"
+  },
+  "seniority_vs_complexity": {
+    "type": "int",
+    "range": [
+      -4,
+      4
+    ],
+    "unit": "delta",
+    "desc": "Member seniority level minus task complexity rating"
+  },
+  "overtime_trend": {
+    "type": "float",
+    "range": [
+      -20.0,
+      20.0
+    ],
+    "unit": "pct_slope",
+    "desc": "5-week historical overtime slope"
+  },
+  "overload_streak_weeks": {
+    "type": "int",
+    "range": [
+      0,
+      5
+    ],
+    "unit": "weeks",
+    "desc": "Consecutive weeks where utilization exceeded 100%"
+  },
+  "recent_pto_days": {
+    "type": "int",
+    "range": [
+      0,
+      20
+    ],
+    "unit": "days",
+    "desc": "PTO taken in recent 30-day window"
+  },
+  "tenure_months": {
+    "type": "int",
+    "range": [
+      1,
+      150
+    ],
+    "unit": "months",
+    "desc": "Total months at organization"
+  },
+  "task_priority": {
+    "type": "int",
+    "range": [
+      1,
+      4
+    ],
+    "unit": "tier",
+    "desc": "Task priority (1: Low to 4: Critical)"
+  },
+  "collaboration_needed": {
+    "type": "int",
+    "range": [
+      0,
+      1
+    ],
+    "unit": "binary",
+    "desc": "Whether task requires active cross-team pairing"
+  },
+  "concurrent_task_count": {
+    "type": "int",
+    "range": [
+      1,
+      10
+    ],
+    "unit": "tasks",
+    "desc": "Active in-flight tasks assigned to member"
+  }
+}

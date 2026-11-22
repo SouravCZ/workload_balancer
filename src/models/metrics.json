@@ -1,0 +1,132 @@
+{
+  "dataset": {
+    "train_rows": 6985,
+    "val_rows": 1504,
+    "test_rows": 1511
+  },
+  "outcome_quality": {
+    "Dummy (Mean)": {
+      "MAE": 21.670993235480967,
+      "RMSE": 26.238180405035834,
+      "R2": -0.0011416661493912628
+    },
+    "Heuristic Baseline": {
+      "MAE": 28.671350099272008,
+      "RMSE": 32.53082606516164,
+      "R2": -0.5389279666497742
+    },
+    "Linear (Ridge)": {
+      "MAE": 4.0342508552021945,
+      "RMSE": 5.094873510804534,
+      "R2": 0.9622519152362752
+    },
+    "GradientBoosting (Candidate)": {
+      "MAE": 2.989553828018012,
+      "RMSE": 3.78454146945874,
+      "R2": 0.9791716606099697
+    }
+  },
+  "on_time": {
+    "Dummy (Majority)": {
+      "Accuracy": 0.600264725347452,
+      "F1": 0.750206782464847,
+      "ROC-AUC": 0.5
+    },
+    "Heuristic Baseline": {
+      "Accuracy": 0.4771674387822634,
+      "F1": 0.23449612403100775,
+      "ROC-AUC": 0.5633921595829348
+    },
+    "Logistic Regression": {
+      "Accuracy": 0.7690271343481139,
+      "F1": 0.8116567728008635,
+      "ROC-AUC": 0.8349500208094511
+    },
+    "GradientBoosting (Candidate)": {
+      "Accuracy": 0.7690271343481139,
+      "F1": 0.8114532685035116,
+      "ROC-AUC": 0.829501230313164
+    }
+  },
+  "burnout_risk": {
+    "Dummy (All 0)": {
+      "Accuracy": 0.8292521508934481,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1": 0.0,
+      "ROC-AUC": 0.5,
+      "PR-AUC": 0.17074784910655194
+    },
+    "Heuristic Baseline": {
+      "Accuracy": 0.2528127068166777,
+      "Precision": 0.1855595667870036,
+      "Recall": 0.9961240310077519,
+      "F1": 0.31284236153377964,
+      "ROC-AUC": 0.5479423028143309,
+      "PR-AUC": 0.18550215702855224
+    },
+    "Logistic (Balanced)": {
+      "Accuracy": 0.8087359364659166,
+      "Precision": 0.4668094218415418,
+      "Recall": 0.8449612403100775,
+      "F1": 0.6013793103448276,
+      "ROC-AUC": 0.8879727413896571,
+      "PR-AUC": 0.6938322099462781
+    },
+    "GradientBoosting (Candidate)": {
+      "Accuracy": 0.8742554599602912,
+      "Precision": 0.625,
+      "Recall": 0.6589147286821705,
+      "F1": 0.6415094339622641,
+      "ROC-AUC": 0.8860502236492882,
+      "PR-AUC": 0.6966579397130157,
+      "Threshold": 0.35,
+      "ConfusionMatrix": [
+        [
+          1151,
+          102
+        ],
+        [
+          88,
+          170
+        ]
+      ]
+    }
+  },
+  "permutation_importance": {
+    "outcome_quality": {
+      "projected_utilization_after_assign": 0.3008,
+      "skill_gap_max": 0.1505,
+      "seniority_vs_complexity": 0.1191,
+      "skill_match_score": 0.0502,
+      "skill_coverage_ratio": 0.0275,
+      "concurrent_task_count": 0.0245,
+      "collaboration_needed": 0.015,
+      "hours_to_deadline_ratio": 0.0054,
+      "task_hours_to_headroom_ratio": 0.0002,
+      "overtime_trend": 0.0,
+      "overload_streak_weeks": 0.0,
+      "tenure_months": -0.0,
+      "task_priority": -0.0,
+      "current_utilization": -0.0,
+      "recent_pto_days": -0.0
+    },
+    "burnout_risk": {
+      "projected_utilization_after_assign": 0.0882,
+      "overload_streak_weeks": 0.0254,
+      "recent_pto_days": 0.004,
+      "tenure_months": 0.0024,
+      "concurrent_task_count": 0.0016,
+      "skill_match_score": 0.0007,
+      "hours_to_deadline_ratio": 0.0005,
+      "task_hours_to_headroom_ratio": 0.0,
+      "skill_gap_max": 0.0,
+      "skill_coverage_ratio": -0.0003,
+      "collaboration_needed": -0.0004,
+      "task_priority": -0.0007,
+      "seniority_vs_complexity": -0.0012,
+      "overtime_trend": -0.0012,
+      "current_utilization": -0.0012
+    }
+  }
+}

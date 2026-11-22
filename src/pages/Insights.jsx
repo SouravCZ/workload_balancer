@@ -4,6 +4,8 @@ import { Icon, SectionHeading } from "../components/ui";
 import Modal, { Button, ModalActions } from "../components/Modal";
 import { rebalanceProposals, skillCoverage, teamMetrics } from "../utils/scoring";
 import { capacityByGroup, workloadTrend } from "../services/mockData";
+import metricsData from "../models/metrics.json";
+import { predictBurnout, predictTaskFit } from "../services/mlModel";
 
 const ranges = ["This Week", "This Month", "Q3"];
 
@@ -25,6 +27,39 @@ export default function Insights() {
   const metrics = useMemo(() => teamMetrics(members, tasks), [members, tasks]);
   const proposals = useMemo(() => rebalanceProposals(members, tasks), [members, tasks]);
   const coverage = useMemo(() => skillCoverage(members), [members]);
+
+  // Live pod ML telemetry
+  const podMlTelemetry = useMemo(() => {
+    let totalQuality = 0;
+    let totalOnTime = 0;
+    let assignedCount = 0;
+    tasks.forEach((t) => {
+      if (t.assignedMemberId) {
+        const m = members.find((x) => x.id === t.assignedMemberId);
+        if (m) {
+          const fit = predictTaskFit(m, t, members, tasks);
+          totalQuality += fit.mlQuality;
+          totalOnTime += fit.mlOnTimeProb;
+          assignedCount++;
+        }
+      }
+    });
+
+    const burnoutRisks = members.map((m) => {
+      const pred = predictBurnout(m, members, tasks);
+      return { member: m, ...pred };
+    });
+
+    const elevatedBurnoutCount = burnoutRisks.filter((r) => r.isElevated).length;
+
+    return {
+      avgQuality: assignedCount > 0 ? Math.round(totalQuality / assignedCount) : 0,
+      avgOnTimePct: assignedCount > 0 ? Math.round((totalOnTime / assignedCount) * 100) : 0,
+      elevatedBurnoutCount,
+      burnoutRisks,
+      assignedCount,
+    };
+  }, [members, tasks]);
 
   const utilization = Math.round(metrics.utilization * 100);
   const teamRisk = metrics.highRisk.length
@@ -484,6 +519,227 @@ export default function Insights() {
           </div>
         </div>
       </div>
+
+      {/* Model Performance & Strategic ML Telemetry */}
+      <section className="bg-background border border-primary-container/20 p-lg rounded-xl space-y-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-outline-variant/40 pb-md">
+          <div>
+            <div className="flex items-center gap-xs">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-container/10 text-primary-container border border-primary-container/30">
+                <Icon name="psychology" className="text-[14px]" />
+                Client-Side ML Telemetry
+              </span>
+              <span className="text-xs text-secondary font-label-md">
+                GroupShuffleSplit (70/15/15) · N = 10,000 assignments
+              </span>
+            </div>
+            <h3 className="font-headline-sm text-headline-sm font-bold text-primary mt-1">
+              Model Performance & Verification
+            </h3>
+            <p className="text-xs text-secondary mt-0.5 font-body-sm">
+              Live in-browser tree-ensemble models evaluating assignment quality, delivery likelihood, and burnout risk.
+            </p>
+          </div>
+          <div className="flex items-center gap-sm">
+            <span className="text-xs text-on-surface-variant font-label-md bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/60">
+              Inference: &lt; 0.05 ms / eval
+            </span>
+          </div>
+        </div>
+
+        {/* Synthetic Disclaimer Banner */}
+        <div className="p-md rounded-lg bg-secondary-container/30 border border-secondary/30 flex items-start gap-md">
+          <Icon name="info" className="text-secondary text-[20px] shrink-0 mt-0.5" />
+          <div className="text-xs text-secondary leading-relaxed font-body-sm">
+            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> Models are trained on a controlled synthetic dataset (10,000 assignments, 300 members, 4,000 tasks) with nonlinear interaction labels and Gaussian noise. Real-world enterprise deployments calibrate against historical issue tracker throughput and HR leaves.
+          </div>
+        </div>
+
+        {/* 3 Model Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+          {/* Quality Model */}
+          <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold">
+                  Assignment Fit Regressor
+                </span>
+                <span className="text-[10px] bg-primary-container/15 text-primary-container px-1.5 py-0.5 rounded font-mono font-bold">
+                  GradientBoosting
+                </span>
+              </div>
+              <div className="mt-sm flex items-baseline gap-xs">
+                <span className="text-2xl font-bold font-headline-sm text-primary">
+                  {metricsData.outcome_quality["GradientBoosting (Candidate)"].R2.toFixed(3)}
+                </span>
+                <span className="text-xs text-secondary font-label-md">Test R²</span>
+              </div>
+              <p className="text-xs text-secondary mt-xs font-body-sm">
+                MAE: {metricsData.outcome_quality["GradientBoosting (Candidate)"].MAE.toFixed(2)} pts (vs Heuristic R²: {metricsData.outcome_quality["Heuristic Baseline"].R2.toFixed(3)})
+              </p>
+            </div>
+            <div className="mt-md pt-sm border-t border-outline-variant/40 flex justify-between items-center text-xs">
+              <span className="text-secondary">Pod Avg Quality:</span>
+              <span className="font-bold text-primary">{podMlTelemetry.avgQuality} / 100</span>
+            </div>
+          </div>
+
+          {/* On-Time Model */}
+          <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold">
+                  On-Time Delivery Classifier
+                </span>
+                <span className="text-[10px] bg-primary-container/15 text-primary-container px-1.5 py-0.5 rounded font-mono font-bold">
+                  GradientBoosting
+                </span>
+              </div>
+              <div className="mt-sm flex items-baseline gap-xs">
+                <span className="text-2xl font-bold font-headline-sm text-primary">
+                  {metricsData.on_time["GradientBoosting (Candidate)"]["ROC-AUC"].toFixed(3)}
+                </span>
+                <span className="text-xs text-secondary font-label-md">ROC-AUC</span>
+              </div>
+              <p className="text-xs text-secondary mt-xs font-body-sm">
+                F1: {(metricsData.on_time["GradientBoosting (Candidate)"].F1 * 100).toFixed(1)}% · Acc: {(metricsData.on_time["GradientBoosting (Candidate)"].Accuracy * 100).toFixed(1)}% (vs Heuristic AUC: {metricsData.on_time["Heuristic Baseline"]["ROC-AUC"].toFixed(3)})
+              </p>
+            </div>
+            <div className="mt-md pt-sm border-t border-outline-variant/40 flex justify-between items-center text-xs">
+              <span className="text-secondary">Pod Avg On-Time:</span>
+              <span className="font-bold text-primary">{podMlTelemetry.avgOnTimePct}%</span>
+            </div>
+          </div>
+
+          {/* Burnout Model */}
+          <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold">
+                  Burnout Risk Classifier
+                </span>
+                <span className="text-[10px] bg-primary-container/15 text-primary-container px-1.5 py-0.5 rounded font-mono font-bold">
+                  Threshold: 0.35
+                </span>
+              </div>
+              <div className="mt-sm flex items-baseline gap-xs">
+                <span className="text-2xl font-bold font-headline-sm text-primary">
+                  {metricsData.burnout_risk["GradientBoosting (Candidate)"]["ROC-AUC"].toFixed(3)}
+                </span>
+                <span className="text-xs text-secondary font-label-md">ROC-AUC</span>
+              </div>
+              <p className="text-xs text-secondary mt-xs font-body-sm">
+                PR-AUC: {metricsData.burnout_risk["GradientBoosting (Candidate)"]["PR-AUC"].toFixed(3)} · Recall: {(metricsData.burnout_risk["GradientBoosting (Candidate)"].Recall * 100).toFixed(1)}% (vs Heuristic AUC: {metricsData.burnout_risk["Heuristic Baseline"]["ROC-AUC"].toFixed(3)})
+              </p>
+            </div>
+            <div className="mt-md pt-sm border-t border-outline-variant/40 flex justify-between items-center text-xs">
+              <span className="text-secondary">Pod High Risk:</span>
+              <span className="font-bold text-primary">{podMlTelemetry.elevatedBurnoutCount} / {members.length} members</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Confusion Matrix & Permutation Importance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-md pt-xs">
+          {/* Confusion Matrix */}
+          <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <div className="flex items-center justify-between mb-sm">
+              <h4 className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold">
+                Burnout Classifier Confusion Matrix (Test Set: N = 1,511)
+              </h4>
+              <span className="text-[10px] text-secondary font-mono">Decision Threshold = 0.35</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1 text-center font-mono text-xs mt-md">
+              <div className="p-1"></div>
+              <div className="p-1 font-bold text-secondary text-[11px]">Pred: Safe</div>
+              <div className="p-1 font-bold text-secondary text-[11px]">Pred: Burnout</div>
+
+              <div className="p-2 font-bold text-secondary text-[11px] text-left">Actual: Safe</div>
+              <div className="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/40">
+                <span className="font-bold text-primary block text-sm">
+                  {metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[0][0]}
+                </span>
+                <span className="text-[10px] text-secondary">True Negative</span>
+              </div>
+              <div className="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/40">
+                <span className="font-bold text-error block text-sm">
+                  {metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[0][1]}
+                </span>
+                <span className="text-[10px] text-secondary">False Positive</span>
+              </div>
+
+              <div className="p-2 font-bold text-secondary text-[11px] text-left">Actual: Burnout</div>
+              <div className="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/40">
+                <span className="font-bold text-error block text-sm">
+                  {metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[1][0]}
+                </span>
+                <span className="text-[10px] text-secondary">False Negative</span>
+              </div>
+              <div className="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/40">
+                <span className="font-bold text-primary-container block text-sm">
+                  {metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[1][1]}
+                </span>
+                <span className="text-[10px] text-secondary">True Positive</span>
+              </div>
+            </div>
+
+            <div className="mt-md text-[11px] text-secondary flex justify-between font-label-md px-1">
+              <span>Precision: <strong>{(metricsData.burnout_risk["GradientBoosting (Candidate)"].Precision * 100).toFixed(1)}%</strong></span>
+              <span>Recall: <strong>{(metricsData.burnout_risk["GradientBoosting (Candidate)"].Recall * 100).toFixed(1)}%</strong></span>
+              <span>Specificity: <strong>{((metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[0][0] / (metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[0][0] + metricsData.burnout_risk["GradientBoosting (Candidate)"].ConfusionMatrix[0][1])) * 100).toFixed(1)}%</strong></span>
+            </div>
+          </div>
+
+          {/* Permutation Importance */}
+          <div className="p-md rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <h4 className="font-label-md text-xs uppercase tracking-wider text-secondary font-bold mb-sm">
+              Top Permutation Feature Importances
+            </h4>
+            <div className="space-y-sm text-xs font-body-sm mt-md">
+              <div>
+                <div className="flex justify-between text-secondary mb-1">
+                  <span>Projected Utilization (Quality & Burnout)</span>
+                  <span className="font-mono font-bold text-primary">+30.1% quality / +8.8% risk</span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-container rounded-full" style={{ width: "95%" }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-secondary mb-1">
+                  <span>Max Skill Gap (Required vs Member)</span>
+                  <span className="font-mono font-bold text-primary">+15.1% quality impact</span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-container rounded-full" style={{ width: "65%" }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-secondary mb-1">
+                  <span>Seniority vs Task Complexity</span>
+                  <span className="font-mono font-bold text-primary">+11.9% quality impact</span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-container rounded-full" style={{ width: "52%" }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-secondary mb-1">
+                  <span>Overload Streak Duration</span>
+                  <span className="font-mono font-bold text-primary">+2.5% burnout driver</span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-container rounded-full" style={{ width: "35%" }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="bg-primary-container text-surface-container-low p-lg rounded-xl flex flex-col md:flex-row items-center justify-between gap-lg shadow-sm border border-primary/20">
         <div className="flex items-start md:items-center gap-md">

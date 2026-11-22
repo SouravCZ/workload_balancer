@@ -1,16 +1,133 @@
-# React + Vite
+# Equilibrium — Team Fit & Workload Balancer
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+[![Vite](https://img.shields.io/badge/Vite-8.3.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Tests](https://img.shields.io/badge/Tests-33%20passed-brightgreen?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![ML In-Browser](https://img.shields.io/badge/ML%20In--Browser-Gradient%20Boosting%20(%3C0.05ms)-blueviolet)](ml/models/model_card.md)
 
-Currently, two official plugins are available:
+**Equilibrium** is a modern engineering operations portal designed to distribute software development tasks fairly, transparently, and sustainably. In typical teams, 20% of senior engineers often absorb 70% of organizational friction—leading to silent burnout, sudden turnover, and delayed critical-path features.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Equilibrium replaces intuition-based assignment with an objective **hybrid dual-scoring engine**: combining transparent, deterministic mathematical telemetry with ultra-fast, zero-dependency client-side machine learning.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🌟 Key Features
 
-## Expanding the Oxlint configuration
+- **⚖️ Live Capacity & Workload Balancer (`/workload`)**: Real-time capacity tracking (contracted vs allocated hours) with automated rebalancing proposals that alleviate overloaded engineers while safeguarding receiver headroom.
+- **🎯 Multi-Attribute Task Fit (`/tasks`)**: Scores candidate-task assignments on multi-skill overlap depth (1–5 scale) and post-assignment availability headroom, with strict 4-tier deterministic tie-breaking.
+- **🛡️ Burnout Risk Fatigue Radar (`/burnout-risk`)**: Predicts exhaustion risk based on active overage, multi-week overload streaks, overtime velocity, and PTO recovery deficits.
+- **🧠 In-Browser ML Ensembles (`/insights`)**: Three client-side Gradient Boosting models evaluating continuous outcome quality ($R^2 = 0.979$), on-time delivery likelihood ($\text{ROC-AUC} = 0.830$), and burnout risk ($\text{ROC-AUC} = 0.886$) in `< 0.05 ms` per task without an external backend.
+- **🔍 Divergence Auditing (`MlVsHeuristicPanel`)**: Proactively flags and explains any assignment where the ML model and the deterministic heuristic diverge by $\ge 15\%$.
+- **📊 Executive Operations Reports (`/reports`)**: Filterable, exportable CSV reports and printer-friendly summaries with consolidated capacity metrics and ML intelligence breakdown.
+- **💾 Persistent State**: Session state automatically synchronizes to `localStorage` (`equilibrium_team_state_v1`) with full factory reset guardrails.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+---
+
+## 🏗️ Architecture & Dual-Engine Overview
+
+```text
+                                  ┌──────────────────────────────┐
+                                  │   Incoming Task Assignment   │
+                                  └──────────────┬───────────────┘
+                                                 │
+                        ┌────────────────────────┴────────────────────────┐
+                        ▼                                                 ▼
+        ┌───────────────────────────────┐                 ┌───────────────────────────────┐
+        │     Deterministic Engine      │                 │    In-Browser ML Pipeline     │
+        │      (src/utils/scoring)      │                 │    (src/services/mlModel)     │
+        ├───────────────────────────────┤                 ├───────────────────────────────┤
+        │ • SkillOverlap (60% weight)   │                 │ • 15 Feature Telemetry Vector │
+        │ • AvailabilityScore (40%)     │                 │ • Gradient Boosting Ensembles │
+        │ • Bounded in [0, 1]           │                 │ • Outcome Quality Regressor   │
+        │ • Deterministic Tie-Break     │                 │ • On-Time Classifier          │
+        │ • Overload / Underutil Limits │                 │ • Burnout Classifier (P≥0.35) │
+        └───────────────┬───────────────┘                 └───────────────┬───────────────┘
+                        │                                                 │
+                        └────────────────────────┬────────────────────────┘
+                                                 ▼
+                               ┌──────────────────────────────────┐
+                               │       MlVsHeuristicPanel         │
+                               │   Audits Divergence (|Δ| ≥ 15%)  │
+                               └──────────────────────────────────┘
+```
+
+For complete mathematical definitions and architectural decision records, see:
+- [System Architecture](docs/architecture.md)
+- [Defect Audit & Verification](docs/audit.md)
+- [Architecture Decision Records (ADRs)](docs/decisions.md)
+- [ML Model Card](ml/models/model_card.md)
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+- Node.js 18+ (tested on Node.js 20+)
+- Python 3.10+ (for synthetic dataset regeneration and ML retraining)
+
+### 2. Frontend Installation & Execution
+```bash
+# Install frontend dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Run full Vitest unit & parity test suite (33 tests)
+npm run test
+
+# Run Oxlint static analysis
+npm run lint
+
+# Build production bundle
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+### 3. ML Pipeline Reproduction
+The ML models can be retrained and exported from scratch using deterministic random seeds:
+
+```bash
+# 1. Install Python ML requirements
+pip install -r ml/requirements.txt
+
+# 2. Generate reproducible synthetic dataset (10,000 assignments, seed 42)
+python ml/generate_data.py --seed 42 --n_members 300 --n_tasks 4000
+
+# 3. Train models with GroupShuffleSplit (70/15/15 by member) and export JSON bundles
+python ml/train.py
+
+# 4. Verify in-browser parity against Python output (< 1e-4 tolerance)
+npm run test
+```
+
+---
+
+## 📈 Model Performance Benchmark (Held-Out Test Set)
+
+Models are evaluated on a held-out test set ($N = 1,511$ assignments) partitioned strictly by `member_id` via `GroupShuffleSplit` (70% train / 15% validation / 15% test) to prevent cross-person data leakage:
+
+| Target Model | Baseline Metric | Equilibrium ML (Gradient Boosting) | Lift / Performance |
+| :--- | :--- | :--- | :--- |
+| **Outcome Quality** (0–100) | Heuristic $R^2 = -0.539$ | **$R^2 = 0.979$, MAE = 2.99** | **+1.518 $R^2$ pts** |
+| **On-Time Delivery** (0/1) | Heuristic ROC-AUC = 0.563 | **ROC-AUC = 0.830, F1 = 81.1%, Acc = 76.9%** | **+0.267 AUC pts** |
+| **Burnout Risk** (0/1) | Heuristic ROC-AUC = 0.548 | **ROC-AUC = 0.886, PR-AUC = 0.697, F1 = 64.2%** | **+0.338 AUC pts** |
+
+---
+
+## ⚠️ Synthetic Data Notice & Production Calibration
+
+All machine learning models included in this repository are trained on a controlled synthetic demonstration dataset (`ml/generate_data.py`) with calibrated nonlinear interaction terms and noise. 
+
+In enterprise deployments, these pipelines are designed to be recalibrated against historical engineering telemetry:
+- **Task Outcomes**: Pull request cycle times, code review iterations, and deployment rollbacks from GitHub/GitLab.
+- **On-Time Delivery**: Story point estimations vs actual resolution times from Jira or Linear.
+- **Fatigue Markers**: On-call rotation schedules (PagerDuty), overtime hours, and PTO balances (HRIS).
+
+---
+
+## 📄 License
+MIT License. Equilibrium — Team Fit & Workload Balancer.

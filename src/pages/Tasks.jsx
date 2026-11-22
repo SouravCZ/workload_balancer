@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTeamContext } from "../context/TeamContext";
 import { Avatar, Card, Chip, Icon, KpiCard, SectionHeading } from "../components/ui";
 import Modal, { Button, Field, ModalActions, inputClass } from "../components/Modal";
@@ -8,6 +8,8 @@ import {
   rankCandidates,
   teamMetrics,
 } from "../utils/scoring";
+import { scoreCandidateML } from "../services/mlModel";
+import MlVsHeuristicPanel from "../components/MlVsHeuristicPanel";
 
 const priorityTone = {
   Critical: "high",
@@ -94,6 +96,25 @@ export default function Tasks() {
     if (!selected) return null;
     return rankCandidates(selected, members).find((c) => c.member.id !== selected.assignedMemberId) ?? null;
   }, [selected, members]);
+
+  const [mlCandidateScores, setMlCandidateScores] = useState({});
+
+  useEffect(() => {
+    if (!selected) return;
+    let isMounted = true;
+    async function loadScores() {
+      const top3 = rankCandidates(selected, members).slice(0, 5);
+      const scores = {};
+      for (const { member } of top3) {
+        scores[member.id] = await scoreCandidateML(member, selected, tasks);
+      }
+      if (isMounted) setMlCandidateScores(scores);
+    }
+    loadScores();
+    return () => {
+      isMounted = false;
+    };
+  }, [selected, members, tasks]);
 
   const dueThisWeek = tasks.filter((t) => t.deadline === "Today" || t.deadline === "Oct 24").length;
   const atRisk = tasks.filter((t) => {
@@ -378,6 +399,8 @@ export default function Tasks() {
             ) : null}
           </div>
         </Card>
+
+        <MlVsHeuristicPanel members={members} tasks={tasks} />
       </main>
 
       <aside className="w-80 lg:w-96 bg-surface-container-lowest border-l border-outline-variant flex-col h-full shrink-0 hidden md:flex z-10 overflow-y-auto custom-scrollbar">
@@ -515,35 +538,54 @@ export default function Tasks() {
                 <div className="space-y-sm">
                   {rankCandidates(selected, members)
                     .slice(0, 3)
-                    .map(({ member, fitScore }) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center gap-sm p-sm rounded-lg border border-outline-variant"
-                      >
-                        <Avatar member={member} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-label-md text-label-md text-on-surface truncate">
-                            {member.name}
-                          </p>
-                          <p className="font-body-sm text-body-sm text-secondary truncate">
-                            {member.shortRole}
-                          </p>
+                    .map(({ member, fitScore }) => {
+                      const ml = mlCandidateScores[member.id];
+                      return (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-sm p-sm rounded-lg border border-outline-variant"
+                        >
+                          <Avatar member={member} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-label-md text-label-md text-on-surface truncate">
+                              {member.name}
+                            </p>
+                            <p className="font-body-sm text-body-sm text-secondary truncate">
+                              {member.shortRole}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-right flex-shrink-0">
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] text-secondary font-mono">
+                                Heur: {Math.round(fitScore * 100)}%
+                              </span>
+                              <span className="text-xs font-bold text-primary font-mono">
+                                ML: {ml ? `${Math.round(ml.mlFitScore * 100)}%` : "..."}
+                              </span>
+                            </div>
+                            {ml?.onTimeProbability !== undefined ? (
+                              <Chip
+                                tone={ml.onTimeProbability >= 0.7 ? "positive" : "warning"}
+                                className="text-[10px] py-0.5 px-1.5"
+                                title={`Likelihood of on-time completion: ${Math.round(ml.onTimeProbability * 100)}%`}
+                              >
+                                {Math.round(ml.onTimeProbability * 100)}% on-time
+                              </Chip>
+                            ) : null}
+                          </div>
+                          {member.id !== selected.assignedMemberId ? (
+                            <button
+                              type="button"
+                              onClick={() => autoAssign(member.id)}
+                              className="p-1.5 rounded-md text-primary hover:bg-surface-container transition-colors ml-1"
+                              aria-label={`Assign to ${member.name}`}
+                            >
+                              <Icon name="check" className="text-[18px]" />
+                            </button>
+                          ) : null}
                         </div>
-                        <Chip tone={fitScore > 0.8 ? "strong" : "outline"}>
-                          {Math.round(fitScore * 100)}%
-                        </Chip>
-                        {member.id !== selected.assignedMemberId ? (
-                          <button
-                            type="button"
-                            onClick={() => autoAssign(member.id)}
-                            className="p-1.5 rounded-md text-primary hover:bg-surface-container transition-colors"
-                            aria-label={`Assign to ${member.name}`}
-                          >
-                            <Icon name="check" className="text-[18px]" />
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             </div>

@@ -1,0 +1,32 @@
+{
+  "seed": 42,
+  "n_members": 300,
+  "n_tasks": 4000,
+  "n_assignments": 10000,
+  "burnout_rate": 0.1798,
+  "on_time_rate": 0.6026,
+  "mean_outcome_quality": 66.62,
+  "missing_values_count": 546,
+  "features": [
+    "skill_match_score",
+    "skill_gap_max",
+    "skill_coverage_ratio",
+    "current_utilization",
+    "projected_utilization_after_assign",
+    "task_hours_to_headroom_ratio",
+    "hours_to_deadline_ratio",
+    "seniority_vs_complexity",
+    "overtime_trend",
+    "overload_streak_weeks",
+    "recent_pto_days",
+    "tenure_months",
+    "task_priority",
+    "collaboration_needed",
+    "concurrent_task_count"
+  ],
+  "targets": [
+    "outcome_quality",
+    "on_time",
+    "burnout_flag"
+  ]
+}

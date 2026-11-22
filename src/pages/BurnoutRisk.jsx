@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTeamContext } from "../context/TeamContext";
 import { Avatar, Card, Chip, Icon, KpiCard, riskTone } from "../components/ui";
 import Modal, { Button, ModalActions } from "../components/Modal";
-import { calculateFitScore, calculateRiskScore, teamMetrics } from "../utils/scoring";
+import { calculateFitScore, calculateRiskScore, teamMetrics, UNDERUTILIZED_THRESHOLD, STREAK_LOAD_PCT, MIN_PROPOSAL_FIT } from "../utils/scoring";
+import { predictMemberBurnoutML } from "../services/mlModel";
 
 const gaugeColor = {
   High: "#ba1a1a",
@@ -23,6 +24,23 @@ export default function BurnoutRisk() {
     [metrics.rows],
   );
 
+  const [mlBurnoutMap, setMlBurnoutMap] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBurnout() {
+      const map = {};
+      for (const m of members) {
+        map[m.id] = await predictMemberBurnoutML(m, tasks);
+      }
+      if (isMounted) setMlBurnoutMap(map);
+    }
+    loadBurnout();
+    return () => {
+      isMounted = false;
+    };
+  }, [members, tasks]);
+
   const selectedRow = ranked.find((row) => row.member.id === selectedId) ?? ranked[0] ?? null;
   const member = selectedRow?.member ?? null;
   const risk = selectedRow?.risk ?? null;
@@ -30,7 +48,7 @@ export default function BurnoutRisk() {
   const highRisk = metrics.rows.filter((r) => r.risk.tier === "High");
   const mediumRisk = metrics.rows.filter((r) => r.risk.tier === "Medium");
   const atRiskCapacity = metrics.rows.filter((r) => r.status === "overloaded");
-  const recovering = metrics.rows.filter((r) => r.utilization < 0.5);
+  const recovering = metrics.rows.filter((r) => r.utilization < UNDERUTILIZED_THRESHOLD);
   const teamAvg = Math.round(
     metrics.rows.reduce((sum, r) => sum + r.risk.score, 0) / Math.max(1, metrics.rows.length),
   );
@@ -46,12 +64,12 @@ export default function BurnoutRisk() {
             .map((m) => ({ member: m, fit: calculateFitScore(m, task).fitScore }))
             .sort((a, b) => b.fit - a.fit)[0],
         }))
-        .filter((entry) => entry.target && entry.target.fit > 0.35)
+        .filter((entry) => entry.target && entry.target.fit >= MIN_PROPOSAL_FIT)
     : [];
 
-  const overCapacityStreak = member
-    ? member.weeklyLoad.filter((load) => load > 100).length
-    : 0;
+  const overCapacityStreak = risk?.streakWeeks ?? (member
+    ? member.weeklyLoad.filter((load) => load > STREAK_LOAD_PCT).length
+    : 0);
   const dueThisWeek = member
     ? tasks.filter(
         (t) => t.assignedMemberId === member.id && (t.deadline === "Today" || t.deadline === "Oct 24"),
@@ -158,13 +176,17 @@ export default function BurnoutRisk() {
                     Utilization
                   </th>
                   <th className="px-lg py-md font-label-md text-label-md text-secondary font-medium">
-                    Tier
+                    Heuristic Tier
+                  </th>
+                  <th className="px-lg py-md font-label-md text-label-md text-secondary font-medium">
+                    ML Burnout Risk
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
                 {ranked.map((row) => {
                   const isActive = row.member.id === member?.id;
+                  const ml = mlBurnoutMap[row.member.id];
                   return (
                     <tr
                       key={row.member.id}
@@ -217,6 +239,20 @@ export default function BurnoutRisk() {
                         <Chip tone={riskTone(row.risk.tier)} icon={row.risk.tier === "Low" ? undefined : "warning"}>
                           {row.risk.tier}
                         </Chip>
+                      </td>
+                      <td className="px-lg py-md">
+                        {ml ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs font-bold text-primary">
+                              {Math.round(ml.burnoutProbability * 100)}%
+                            </span>
+                            <Chip tone={riskTone(ml.riskTier)} className="text-[10px] py-0 px-1.5">
+                              {ml.riskTier}
+                            </Chip>
+                          </div>
+                        ) : (
+                          <span className="text-secondary text-xs">...</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -314,6 +350,39 @@ export default function BurnoutRisk() {
                 )}
               </ul>
             </div>
+
+            {/* ML Model Burnout Radar Block */}
+            {mlBurnoutMap[member.id] ? (
+              <div className="mb-md p-md rounded-xl bg-surface-container-low border border-outline-variant space-y-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="psychology" className="text-primary text-[18px]" />
+                    <span className="font-label-md text-xs font-bold text-primary">
+                      ML Fatigue Radar
+                    </span>
+                  </div>
+                  <Chip tone={riskTone(mlBurnoutMap[member.id].riskTier)} className="text-[10px] font-bold">
+                    {Math.round(mlBurnoutMap[member.id].burnoutProbability * 100)}% ({mlBurnoutMap[member.id].riskTier})
+                  </Chip>
+                </div>
+                <div>
+                  <span className="text-[11px] font-label-md text-secondary block mb-1">
+                    Top Contributing Factors:
+                  </span>
+                  <ul className="space-y-1 text-xs text-on-surface">
+                    {mlBurnoutMap[member.id].topFactors.map((factor, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5 text-secondary">
+                        <span className="text-primary text-[14px] leading-tight">&bull;</span>
+                        <span>{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="text-[10px] text-outline italic">
+                  Model: GradientBoosting (trained on synthetic telemetry)
+                </div>
+              </div>
+            ) : null}
 
             <button
               type="button"

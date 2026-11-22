@@ -6,7 +6,6 @@ import {
 } from "../components/ui";
 import {
   AVAILABILITY_WEIGHT,
-  BURNOUT_HIGH_OVERAGE,
   MAX_PROFICIENCY,
   MIN_PROPOSAL_FIT,
   OVERLOADED_THRESHOLD,
@@ -77,7 +76,7 @@ export default function About() {
               SkillOverlap = (Sum of member proficiencies on required skills) / (RequiredSkills.length × {MAX_PROFICIENCY})
             </div>
             <div className="text-secondary">
-              AvailabilityScore = max(0, min(1, 1 - (AllocatedHours / CapacityHours)))
+              AvailabilityScore = max(0, min(1, 1 - ((AllocatedHours + TaskHours) / CapacityHours)))
             </div>
           </div>
 
@@ -191,6 +190,82 @@ export default function About() {
         </div>
       </Card>
 
+      {/* Block 4b: Machine Learning Pipeline */}
+      <Card className="p-lg">
+        <CardHeader
+          title="5. Machine Learning Architecture & Verification"
+          subtitle="Dual-engine architecture: deterministic heuristic baseline + client-side Gradient Boosting ensembles"
+          icon="psychology"
+        />
+        <div className="mt-md space-y-md text-body-sm text-secondary leading-relaxed">
+          <div className="p-md rounded-xl bg-secondary-container/20 border border-secondary/30 text-xs">
+            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> All ML models in Equilibrium are trained on a controlled synthetic engineering dataset (<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-container">ml/generate_data.py</code>, seed 42) with nonlinear interaction labels and Gaussian noise. In production deployments, pipelines retrain on enterprise issue trackers (Jira/Linear/GitHub) and HR time-off systems.
+          </div>
+
+          <p>
+            Equilibrium employs a hybrid dual-scoring architecture. While the deterministic heuristic formulas provide transparent mathematical guarantees, our client-side machine learning models capture nonlinear real-world dynamics:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+            <div className="p-md rounded-xl bg-surface-container-lowest border border-outline-variant space-y-xs">
+              <span className="font-headline-sm text-sm font-semibold text-primary block">
+                Assignment Quality Regressor
+              </span>
+              <p className="text-xs text-secondary">
+                Predicts task outcome quality on a 0–100 continuous scale. Captures that high skill proficiency cannot compensate for acute workload saturation (&gt;110% utilization).
+              </p>
+              <div className="pt-xs text-[11px] font-mono text-primary font-bold">
+                Test R² = 0.979 (vs Heuristic R² = -0.539)
+              </div>
+            </div>
+
+            <div className="p-md rounded-xl bg-surface-container-lowest border border-outline-variant space-y-xs">
+              <span className="font-headline-sm text-sm font-semibold text-primary block">
+                On-Time Delivery Classifier
+              </span>
+              <p className="text-xs text-secondary">
+                Estimates probability of delivering by the deadline based on task complexity, priority, collaboration dependencies, and schedule headroom.
+              </p>
+              <div className="pt-xs text-[11px] font-mono text-primary font-bold">
+                Test ROC-AUC = 0.830 (vs Heuristic AUC = 0.563)
+              </div>
+            </div>
+
+            <div className="p-md rounded-xl bg-surface-container-lowest border border-outline-variant space-y-xs">
+              <span className="font-headline-sm text-sm font-semibold text-primary block">
+                Burnout Risk Classifier
+              </span>
+              <p className="text-xs text-secondary">
+                Detects probability of burnout manifestation within 4 weeks using sustained multi-week streaks, PTO gaps, overtime velocity, and concurrent critical load.
+              </p>
+              <div className="pt-xs text-[11px] font-mono text-primary font-bold">
+                Test ROC-AUC = 0.886 · Calibrated Threshold = 0.35
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-xs pt-xs">
+            <h4 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+              Engineering Pipeline Methodology:
+            </h4>
+            <ul className="list-disc pl-lg space-y-xs">
+              <li>
+                <strong className="text-primary">Leak-Free Group Partitioning:</strong> Data is partitioned by <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">member_id</code> using scikit-learn&apos;s <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">GroupShuffleSplit</code> (70% train / 15% validation / 15% test), ensuring no engineer appears across multiple splits.
+              </li>
+              <li>
+                <strong className="text-primary">Zero-Dependency In-Browser Inference:</strong> Model tree ensembles are serialized to lightweight JSON trees (<code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">src/models/*.json</code>, ~135 kB uncompressed). An embedded JavaScript inference engine evaluates predictions in &lt;0.05 ms per task with zero server roundtrips.
+              </li>
+              <li>
+                <strong className="text-primary">Exact Mathematical Parity:</strong> Client inference is verified by automated regression tests against scikit-learn across 200 random test vectors, achieving &lt;10⁻⁴ floating-point parity.
+              </li>
+              <li>
+                <strong className="text-primary">Divergence Auditing:</strong> The <code className="font-mono text-xs px-1 py-0.5 rounded bg-surface-container">MlVsHeuristicPanel</code> audits predictions whenever the ML model and heuristic baseline diverge by &ge;15%, surfacing hidden risk factors for engineering managers.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
       {/* Tech Stack */}
       <Card className="p-lg">
         <CardHeader
@@ -209,7 +284,7 @@ export default function About() {
           </div>
           <div className="p-md rounded-xl bg-surface-container-lowest border border-outline-variant">
             <span className="text-secondary block">Styling Architecture</span>
-            <span className="font-bold text-primary text-sm mt-0.5 block">Tailwind CSS 4</span>
+            <span className="font-bold text-primary text-sm mt-0.5 block">Tailwind CSS 3.4</span>
           </div>
           <div className="p-md rounded-xl bg-surface-container-lowest border border-outline-variant">
             <span className="text-secondary block">Routing Engine</span>
@@ -228,10 +303,10 @@ export default function About() {
         <div className="mt-md space-y-sm text-body-sm text-secondary leading-relaxed">
           <ul className="list-disc pl-lg space-y-xs">
             <li>
-              <strong className="text-primary">Mock Data & Client State:</strong> The current environment seeds 10 team engineers and 18 backlog tasks in memory. Changes (task creation, assignment, unassignment) persist across navigation within the browser session, but reset on hard refresh since there is no remote SQL database attached.
+              <strong className="text-primary">Mock Data & Client State:</strong> The current environment seeds 10 team engineers and 18 backlog tasks in memory. Changes (task creation, assignment, unassignment) persist across navigation within the browser session via localStorage, but can be reset to factory defaults at any time.
             </li>
             <li>
-              <strong className="text-primary">Rule-Based Deterministic Scoring:</strong> All calculations execute through pure, auditable TypeScript mathematical functions. Equilibrium does not rely on opaque deep learning models or generative LLM API calls for allocation math, ensuring 100% reproducibility and zero hallucinations.
+              <strong className="text-primary">Dual Scoring Transparency:</strong> Equilibrium couples pure deterministic heuristic scoring with client-side Gradient Boosting models. Both scores are presented side-by-side with full divergence explanations, ensuring managers always understand why an assignment is recommended.
             </li>
             <li>
               <strong className="text-primary">Single-Sprint Planning Window:</strong> Active task allocations represent the current sprint capacity. Future sprint roadmaps are currently represented as historical five-week load trends rather than multi-quarter Gantt projections.

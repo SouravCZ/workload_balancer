@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTeamContext } from "../context/TeamContext";
 import {
   Avatar,
@@ -11,6 +11,7 @@ import {
   riskTone,
 } from "../components/ui";
 import { calculateFitScore, rebalanceProposals, teamMetrics } from "../utils/scoring";
+import { scoreCandidateML } from "../services/mlModel";
 import Modal, { Button, ModalActions } from "../components/Modal";
 import { workloadTrend } from "../services/mockData";
 
@@ -20,10 +21,28 @@ export default function WorkloadView() {
   const { members, tasks, assignTask } = useTeamContext();
   const [sortBy, setSortBy] = useState("Highest load");
   const [dialog, setDialog] = useState(null);
+  const [mlProposalScores, setMlProposalScores] = useState({});
   const closeDialog = () => setDialog(null);
 
   const metrics = useMemo(() => teamMetrics(members, tasks), [members, tasks]);
   const proposals = useMemo(() => rebalanceProposals(members, tasks), [members, tasks]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProposalMl() {
+      const scores = {};
+      for (const p of proposals) {
+        if (p.to && p.task) {
+          scores[p.id] = await scoreCandidateML(p.to, p.task, tasks);
+        }
+      }
+      if (isMounted) setMlProposalScores(scores);
+    }
+    loadProposalMl();
+    return () => {
+      isMounted = false;
+    };
+  }, [proposals, tasks]);
 
   const applyAll = () => {
     proposals.forEach((proposal) => assignTask(proposal.task.id, proposal.to.id));
@@ -249,34 +268,72 @@ export default function WorkloadView() {
           </p>
         ) : (
           <ul className="flex flex-col gap-md">
-            {proposals.map((proposal) => (
-              <li
-                key={proposal.id}
-                className="p-md border border-outline-variant rounded-lg bg-surface-container-low/50"
-              >
-                <div className="flex items-center justify-between gap-md mb-sm">
-                  <div className="flex items-center gap-xs">
-                    <span className="font-label-md text-label-md text-on-surface">
-                      {proposal.task.title}
+            {proposals.map((proposal) => {
+              const ml = mlProposalScores[proposal.id];
+              const recCap = proposal.to.capacityHours || 40;
+              const recBefore = Math.round(((proposal.to.currentAllocatedHours ?? 0) / recCap) * 100);
+              const recAfter = Math.round((((proposal.to.currentAllocatedHours ?? 0) + proposal.hours) / recCap) * 100);
+
+              let donorBefore = null;
+              let donorAfter = null;
+              if (proposal.from) {
+                const donCap = proposal.from.capacityHours || 40;
+                donorBefore = Math.round(((proposal.from.currentAllocatedHours ?? 0) / donCap) * 100);
+                donorAfter = Math.round((((proposal.from.currentAllocatedHours ?? 0) - proposal.hours) / donCap) * 100);
+              }
+
+              return (
+                <li
+                  key={proposal.id}
+                  className="p-md border border-outline-variant rounded-lg bg-surface-container-low/50 space-y-sm"
+                >
+                  <div className="flex items-center justify-between gap-md">
+                    <div className="flex items-center gap-xs">
+                      <span className="font-label-md text-label-md text-on-surface">
+                        {proposal.task.title}
+                      </span>
+                      <Chip tone={proposal.type === "assign" ? "primary" : "neutral"} className="text-[10px] py-0 px-1.5">
+                        {proposal.type === "assign" ? "Assign" : "Transfer"}
+                      </Chip>
+                    </div>
+                    <span className="font-label-md text-label-md text-primary flex-shrink-0">
+                      {proposal.hours}h
                     </span>
-                    <Chip tone={proposal.type === "assign" ? "primary" : "neutral"} className="text-[10px] py-0 px-1.5">
-                      {proposal.type === "assign" ? "Assign" : "Transfer"}
-                    </Chip>
                   </div>
-                  <span className="font-label-md text-label-md text-primary flex-shrink-0">
-                    {proposal.hours}h
-                  </span>
-                </div>
-                <div className="flex items-center gap-sm flex-wrap text-body-sm text-secondary">
-                  <span>{proposal.from ? proposal.from.name : "Unassigned Backlog"}</span>
-                  <Icon name="arrow_forward" className="text-[14px]" />
-                  <span>{proposal.to.name}</span>
-                  <span className="ml-auto font-label-md text-label-md text-primary">
-                    {Math.round(proposal.fitScore * 100)}% fit
-                  </span>
-                </div>
-              </li>
-            ))}
+
+                  <div className="flex items-center gap-sm flex-wrap text-body-sm text-secondary">
+                    <span>{proposal.from ? proposal.from.name : "Unassigned Backlog"}</span>
+                    <Icon name="arrow_forward" className="text-[14px]" />
+                    <span className="font-medium text-on-surface">{proposal.to.name}</span>
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="font-mono text-xs text-secondary">
+                        Heur: {Math.round(proposal.fitScore * 100)}%
+                      </span>
+                      {ml ? (
+                        <span className="font-mono text-xs font-bold text-primary">
+                          ML Quality: {ml.qualityScore}% ({Math.round(ml.onTimeProbability * 100)}% on-time)
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Predicted Before / After Impact */}
+                  <div className="pt-xs border-t border-outline-variant/60 flex items-center gap-3 text-[11px] font-mono flex-wrap">
+                    <span className="text-secondary">Predicted Impact:</span>
+                    {proposal.from && (
+                      <span className="text-secondary">
+                        Donor: <span className="text-error font-bold">{donorBefore}%</span> &rarr;{" "}
+                        <span className="text-primary font-bold">{donorAfter}%</span>
+                      </span>
+                    )}
+                    <span className="text-secondary">
+                      Receiver: <span className="text-secondary font-bold">{recBefore}%</span> &rarr;{" "}
+                      <span className="text-emerald-700 font-bold">{recAfter}% (Healthy)</span>
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Modal>

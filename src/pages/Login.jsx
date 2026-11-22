@@ -115,6 +115,11 @@ export default function Login() {
           </div>
 
           <div className="w-full max-w-[420px] bg-surface-container-lowest border border-outline-variant rounded-xl soft-shadow p-lg">
+            {/* Demo Sandbox Alert */}
+            <div className="mb-lg p-3 rounded-lg bg-primary-container/10 border border-primary-container/30 text-xs text-primary font-body-sm text-center">
+              <strong className="font-bold">Interactive Demo Environment:</strong> No real password needed. Click &ldquo;Sign In&rdquo; or any provider button to launch the demo with 10 engineers and 18 tasks.
+            </div>
+
             <div className="flex gap-lg border-b border-outline-variant/40 mb-xl">
               {[
                 { key: "login", label: "Login" },
@@ -236,7 +241,7 @@ export default function Login() {
                 <svg className="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
                 </svg>
-                <span className="font-label-md text-label-md text-[13px]">Google</span>
+                <span className="font-label-md text-label-md text-[13px]">Google (Demo)</span>
               </button>
               <button
                 type="button"
@@ -246,7 +251,7 @@ export default function Login() {
                 <svg className="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z" />
                 </svg>
-                <span className="font-label-md text-label-md text-[13px]">Microsoft</span>
+                <span className="font-label-md text-label-md text-[13px]">Microsoft (Demo)</span>
               </button>
             </div>
           </div>

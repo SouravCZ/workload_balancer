@@ -56,11 +56,18 @@ function AppLayout({ children, search, onSearch, searchPlaceholder }) {
 
 function NotFound() {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center gap-md p-xl">
+    <main className="flex-1 flex flex-col items-center justify-center gap-md p-xl text-center">
       <span className="font-display-lg text-display-lg text-primary">404</span>
-      <p className="font-body-md text-body-md text-secondary">
-        This page does not exist in the operations portal.
+      <h2 className="text-xl font-bold text-primary">Page Not Found</h2>
+      <p className="font-body-md text-body-md text-secondary max-w-md">
+        The requested operations view does not exist or has moved.
       </p>
+      <a
+        href="/dashboard"
+        className="mt-md inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-sm hover:bg-primary transition-colors"
+      >
+        Return to Dashboard
+      </a>
     </main>
   );
 }
