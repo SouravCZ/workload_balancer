@@ -78,7 +78,7 @@ $$\text{RiskScore} = \min(100, \text{round}(180 \times \text{Overage} + 12 \time
 - Seeded and reproducible (`--seed 42 --n_members 300 --n_tasks 4000`).
 - Generates 10,000 assignments with correlated features, realistic tenure/seniority distributions, and 15 features matching the app's schema.
 - **Ground Truth Target Functions**:
-  - `outcome_quality` ($0–100$): Complex nonlinear formula penalizing over-allocation ($>110\%$) even with perfect skill match, rewarding seniority-complexity alignment, and adding Gaussian noise ($\sigma=2.5$).
+  - `outcome_quality` ($0–100$): Complex formula penalizing over-allocation ($>110\%$) even with perfect skill match, rewarding seniority-complexity alignment, and adding Gaussian noise ($\sigma=2.5$).
   - `on_time` ($0/1$): Logistic probability dependent on deadline ratio, complexity gap, and schedule headroom.
   - `burnout_flag` ($0/1$): Calibrated sigmoid logit on sustained overload streaks, lack of PTO ($<2$ days), concurrent critical tasks, and overtime trends. Calibrated positive rate: **17.98%** (within the $12–20\%$ target).
 
@@ -89,7 +89,7 @@ $$\text{RiskScore} = \min(100, \text{round}(180 \times \text{Overage} + 12 \time
 #### Benchmark Comparison Table (Held-Out Test Set, N = 1,474)
 | Model Target | Baseline Metric | Linear Baseline | Candidate (Gradient Boosting) Metric | Comparison / Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Outcome Quality** | Heuristic $R^2 = -0.464$ (Spearman $\rho = 0.700$) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13, RMSE = 12.64** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
+| **Outcome Quality** | Heuristic Spearman $\rho = 0.700$ (scale mismatch, $R^2$ not meaningful) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13, RMSE = 12.64** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
 | **On-Time Delivery** | Heuristic ROC-AUC = 0.802 (Spearman $\rho = 0.515$) | Logistic ROC-AUC = 0.848, Acc = 78.2% | **ROC-AUC = 0.845, F1 = 0.815, Acc = 77.7%** | Logistic regression slightly outperforms Gradient Boosting ($-0.003$ AUC) |
 | **Burnout Risk** | Heuristic ROC-AUC = 0.763 (Spearman $\rho = 0.378$) | Logistic ROC-AUC = 0.895, PR-AUC = 0.736 | **ROC-AUC = 0.898, PR-AUC = 0.726, F1 = 0.661** | Calibrated threshold = 0.330 (Recall = 66.5%, Precision = 65.6%) |
 

@@ -199,11 +199,11 @@ export default function About() {
         />
         <div className="mt-md space-y-md text-body-sm text-secondary leading-relaxed">
           <div className="p-md rounded-xl bg-secondary-container/20 border border-secondary/30 text-xs">
-            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> All ML models in Equilibrium are trained on a controlled synthetic engineering dataset (<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-container">ml/generate_data.py</code>, seed 42) with nonlinear interaction labels and Gaussian noise. In production deployments, pipelines retrain on enterprise issue trackers (Jira/Linear/GitHub) and HR time-off systems.
+            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> All ML models in Equilibrium are trained on a controlled synthetic engineering dataset (<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-container">ml/generate_data.py</code>, seed 42) with interaction labels and Gaussian noise. Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter. In production deployments, pipelines retrain on enterprise issue trackers (Jira/Linear/GitHub) and HR time-off systems.
           </div>
 
           <p>
-            Equilibrium employs a hybrid dual-scoring architecture. While the deterministic heuristic formulas provide transparent mathematical guarantees, our client-side machine learning models capture nonlinear real-world dynamics:
+            Equilibrium employs a hybrid dual-scoring architecture. While the deterministic heuristic formulas provide transparent mathematical guarantees, our client-side machine learning models evaluate real-world team dynamics:
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-md">

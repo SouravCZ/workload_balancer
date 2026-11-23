@@ -3,7 +3,9 @@
 > [!WARNING]
 > **SYNTHETIC DATA DISCLAIMER & CALIBRATION NOTE**:
 > These models were trained on synthetically generated engineering telemetry (`ml/generate_data.py`).
-> **Noise Calibration Note**: The outcome noise ($\sigma = 13.5$) and unobserved friction factors were deliberately tuned so that held-out test $R^2$ landed in the target range ($0.60–0.85$). This calibration is an explicit experimental control on synthetic data generated from mathematical formulas; it **does not** validate real-world performance or substitute for empirical validation on genuine software engineering teams.
+> **Noise Calibration Note**: The outcome noise ($\sigma = 13.5$) and unobserved friction factors were deliberately tuned so that held-out test $R^2$ landed in the calibration target range of $0.60–0.85$ for a synthetic dataset. This calibration is an explicit experimental control on synthetic data generated from mathematical formulas; it **does not** validate real-world performance or substitute for empirical validation on genuine software engineering teams.
+>
+> Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter.
 
 ## 1. Overview & System Telemetry
 The Equilibrium ML suite evaluates three operational dimensions on engineering task assignments:
@@ -32,7 +34,7 @@ The Equilibrium ML suite evaluates three operational dimensions on engineering t
 | Task / Target | Model / Baseline | Primary Metric | Secondary Metric | Notes & Baseline Gap |
 | :--- | :--- | :--- | :--- | :--- |
 | **Outcome Quality** (0–100) | Dummy (Mean) | $R^2 = -0.003$ | MAE = 23.11 | Predicts training mean (65.6) |
-| | Heuristic Baseline | $R^2 = -0.464$ | MAE = 28.52 | Rescaled FitScore ($100 \times \text{fit}$); Spearman $\rho = \mathbf{0.700}$ |
+| | Heuristic Baseline | Spearman $\rho = \mathbf{0.700}$ (scale mismatch, $R^2$ not meaningful) | MAE = 28.52 | Rescaled FitScore ($100 \times \text{fit}$) |
 | | Linear (Ridge) | $R^2 = \mathbf{0.784}$ | MAE = 10.46 | Ridge regression on standardized features |
 | | **Gradient Boosting (Tuned)** | **$R^2 = \mathbf{0.798}$** | **MAE = 10.13** | **Gap vs Linear: $+0.014$ $R^2$ pts.** The linear model captures almost all explainable variance. |
 | **On-Time Delivery** (0/1) | Dummy (Majority) | ROC-AUC = 0.500 | Accuracy = 58.1% | Predicts majority class |
@@ -52,11 +54,17 @@ The Equilibrium ML suite evaluates three operational dimensions on engineering t
 ---
 
 ## 3. Real-Data Check: IBM HR Attrition Pipeline (`ml/train_real_data.py`)
-To verify model behavior on real-world workforce dynamics independent of synthetic data, an identical evaluation pipeline was written for the public [IBM HR Employee Attrition & Performance dataset](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset).
-- **Script**: `ml/train_real_data.py`
-- **Features Used**: MonthlyIncome, OverTime, TotalWorkingYears, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, WorkLifeBalance, JobSatisfaction, EnvironmentSatisfaction, NumCompaniesWorked.
-- **Offline Status Notice**: As direct network downloads are sandboxed in the automated build environment, instructions to execute `python ml/train_real_data.py --data-path path/to/WA_Fn-UseC_-HR-Employee-Attrition.csv` are provided.
-- **Boundary**: Real-world HR attrition reflects organizational attrition factors rather than weekly sprint burnout; it serves as a method verification and does **not** validate the synthetic workload model.
+> **Real-data check: not yet run.**
+> 
+> To run the real-data check locally:
+> 1. Download the IBM HR Attrition CSV from Kaggle or an upstream archive to the expected input path:
+>    `ml/data/WA_Fn-UseC_-HR-Employee-Attrition.csv`
+> 2. Execute the evaluation pipeline command:
+>    ```bash
+>    python ml/train_real_data.py --data-path ml/data/WA_Fn-UseC_-HR-Employee-Attrition.csv
+>    ```
+> 
+> Real-world HR attrition reflects organizational departure factors rather than sprint-level workload rebalancing; it serves as a separate methodological check and does **not** validate the synthetic model.
 
 ---
 

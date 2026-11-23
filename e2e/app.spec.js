@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import fs from 'node:fs';
 
 const ROUTES = [
   '/',
@@ -60,20 +61,18 @@ test.describe('Responsive Navigation, Overflow & Console Errors', () => {
 
 test.describe('Accessibility Audit with axe-core', () => {
   for (const route of ROUTES) {
-    test(`${route} has zero serious or critical axe violations`, async ({ page }) => {
+    test(`${route} has zero axe accessibility violations (no rules disabled)`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.goto(route, { waitUntil: 'networkidle' });
 
+      // Run axe with all default rules enabled (zero rules disabled, no exclude/filter)
       const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-      const seriousOrCritical = accessibilityScanResults.violations.filter(
-        (v) => v.impact === 'critical' || v.impact === 'serious'
-      );
 
-      if (seriousOrCritical.length > 0) {
-        console.warn(`Accessibility violations on ${route}:`, seriousOrCritical.map(v => ({ id: v.id, impact: v.impact, help: v.help })));
+      if (accessibilityScanResults.violations.length > 0) {
+        console.warn(`Accessibility violations on ${route}:`, accessibilityScanResults.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help })));
       }
 
-      expect(seriousOrCritical).toEqual([]);
+      expect(accessibilityScanResults.violations).toEqual([]);
     });
   }
 });
@@ -139,7 +138,7 @@ test.describe('Empty State Resilience', () => {
 });
 
 test.describe('Reports CSV Export and Print Actions', () => {
-  test('Reports page triggers CSV download and print dialog', async ({ page }) => {
+  test('Reports page triggers CSV download with valid structure and print dialog', async ({ page }) => {
     // Reset to clean seed data first
     await page.goto('/dashboard', { waitUntil: 'networkidle' });
     await page.evaluate(() => {
@@ -158,7 +157,23 @@ test.describe('Reports CSV Export and Print Actions', () => {
     ]);
     expect(download.suggestedFilename()).toContain('.csv');
 
-    // Test Print trigger (mock window.print)
+    // Strengthened assertion: read downloaded file and assert header row and row count equal task count
+    const downloadPath = await download.path();
+    let csvText = '';
+    if (downloadPath) {
+      csvText = fs.readFileSync(downloadPath, 'utf8');
+    } else {
+      const stream = await download.createReadStream();
+      const chunks = [];
+      for await (const chunk of stream) chunks.push(chunk);
+      csvText = Buffer.concat(chunks).toString('utf8');
+    }
+    const lines = csvText.trim().split(/\r?\n/);
+    const expectedHeader = 'Task ID,Title,Priority,Estimated Hours,Status,Assignee,Assignee Fit Score,Assignee ML Quality (0-100),Assignee ML On-Time %,Top Candidate,Top Candidate Fit Score,Top Candidate ML Quality,Top Candidate ML On-Time %,Optimal Alignment';
+    expect(lines[0]).toBe(expectedHeader);
+    expect(lines.length - 1).toBe(18); // exactly 18 tasks in seed backlog
+
+    // Strengthened assertion: window.print must be called unconditionally
     let printCalled = false;
     await page.exposeFunction('mockPrint', () => { printCalled = true; });
     await page.evaluate(() => {
@@ -166,10 +181,9 @@ test.describe('Reports CSV Export and Print Actions', () => {
     });
 
     const printBtn = page.getByRole('button', { name: /print/i }).first();
-    if (await printBtn.isVisible()) {
-      await printBtn.click();
-      expect(printCalled).toBe(true);
-    }
+    await expect(printBtn).toBeVisible({ timeout: 5000 });
+    await printBtn.click();
+    expect(printCalled).toBe(true);
   });
 });
 

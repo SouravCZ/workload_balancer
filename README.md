@@ -4,7 +4,7 @@
 [![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Tests](https://img.shields.io/badge/Tests-33%20passed-brightgreen?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![ML In-Browser](https://img.shields.io/badge/ML%20In--Browser-Gradient%20Boosting%20(%3C0.05ms)-blueviolet)](ml/models/model_card.md)
+[![ML In-Browser](https://img.shields.io/badge/ML%20In--Browser-Gradient%20Boosting%20(median%200.010ms)-blueviolet)](ml/models/model_card.md)
 
 **Equilibrium** is a modern engineering operations portal designed to distribute software development tasks fairly, transparently, and sustainably. In typical teams, 20% of senior engineers often absorb 70% of organizational friction—leading to silent burnout, sudden turnover, and delayed critical-path features.
 
@@ -112,7 +112,7 @@ Models are evaluated on a held-out test set ($N = 1,474$ assignments) partitione
 
 | Target Model | Baseline Metric | Linear Baseline | Equilibrium ML (Gradient Boosting) | Baseline Comparison / Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Outcome Quality** (0–100) | Heuristic $R^2 = -0.464$ (Spearman $\rho = 0.700$) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
+| **Outcome Quality** (0–100) | Heuristic Spearman $\rho = 0.700$ (scale mismatch, $R^2$ not meaningful) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
 | **On-Time Delivery** (0/1) | Heuristic ROC-AUC = 0.802 (Spearman $\rho = 0.515$) | Logistic ROC-AUC = 0.848, Acc = 78.2% | **ROC-AUC = 0.845, F1 = 81.5%, Acc = 77.7%** | Logistic regression marginally exceeds Gradient Boosting ($-0.003$ AUC) |
 | **Burnout Risk** (0/1) | Heuristic ROC-AUC = 0.763 (Spearman $\rho = 0.378$) | Logistic ROC-AUC = 0.895, PR-AUC = 0.736 | **ROC-AUC = 0.898, PR-AUC = 0.726, F1 = 66.1%** | Calibrated threshold = 0.330 (Recall = 66.5%, Precision = 65.6%) |
 
@@ -120,7 +120,7 @@ Models are evaluated on a held-out test set ($N = 1,474$ assignments) partitione
 
 ## ⚠️ Synthetic Data Notice & Production Calibration
 
-All machine learning models included in this repository are trained on a controlled synthetic demonstration dataset (`ml/generate_data.py`) with calibrated nonlinear interaction terms and noise. 
+All machine learning models included in this repository are trained on a controlled synthetic demonstration dataset (`ml/generate_data.py`) with calibrated interaction terms and noise. Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter. 
 
 In enterprise deployments, these pipelines are designed to be recalibrated against historical engineering telemetry:
 - **Task Outcomes**: Pull request cycle times, code review iterations, and deployment rollbacks from GitHub/GitLab.

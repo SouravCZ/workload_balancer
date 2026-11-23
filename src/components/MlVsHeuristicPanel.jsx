@@ -39,7 +39,7 @@ export default function MlVsHeuristicPanel({ members = [], tasks = [] }) {
               } else if (ml.features?.concurrent_task_count >= 4) {
                 reason = `ML penalized high context switching friction (${ml.features.concurrent_task_count} concurrent tasks in flight).`;
               } else {
-                reason = "Nonlinear multi-variable fatigue and deadline pressure adjustments.";
+                reason = "Multi-variable fatigue and deadline pressure adjustments.";
               }
             } else {
               if (heur.availabilityScore === 0 && postUtil <= 1.05) {

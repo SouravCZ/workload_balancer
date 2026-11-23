@@ -120,7 +120,7 @@ export default function Landing() {
     <div className="min-h-screen bg-white text-[#172b4d] font-body-md antialiased selection:bg-[#deebff] selection:text-[#0052cc] overflow-x-hidden">
       {/* Top Banner Announcement */}
       {showBanner && (
-        <div className="bg-[#deebff]/70 border-b border-[#b3d4ff] text-[#091e42] py-2 px-4 text-xs font-medium flex items-center justify-center relative z-50">
+        <header className="bg-[#deebff]/70 border-b border-[#b3d4ff] text-[#091e42] py-2 px-4 text-xs font-medium flex items-center justify-center relative z-50">
           <div className="flex items-center gap-1.5 text-center flex-wrap justify-center pr-8 sm:pr-0">
             <span className="bg-[#0052cc] text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider mr-1">
               v2.4
@@ -137,7 +137,7 @@ export default function Landing() {
           >
             <Icon name="close" className="text-[16px]" />
           </button>
-        </div>
+        </header>
       )}
 
       {/* Modern Navigation Bar */}
@@ -313,6 +313,7 @@ export default function Landing() {
       )}
 
       {/* Modern High-Conversion Hero Section */}
+      <main tabIndex={0} aria-label="Landing Page Main Content">
       <section className="bg-white border-b border-[#ebecf0] pt-12 pb-20 md:pt-16 md:pb-24">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column: Bold Headline & Context */}
@@ -625,7 +626,7 @@ export default function Landing() {
                 </span>
                 <span className="text-xs font-label-md text-secondary">{task.priority} Priority</span>
               </div>
-              <h4 className="font-headline-sm text-sm font-bold text-primary mb-2">{task.title}</h4>
+              <h3 className="font-headline-sm text-sm font-bold text-primary mb-2">{task.title}</h3>
               <div className="flex flex-wrap gap-1">
                 {task.skills.map((s) => (
                   <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-surface-container text-secondary">
@@ -809,6 +810,8 @@ export default function Landing() {
         </div>
       </section>
 
+      </main>
+
       {/* Clean Footer */}
       <footer className="w-full bg-[#FAF9F6] border-t border-outline-variant/60 py-12">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
@@ -826,9 +829,9 @@ export default function Landing() {
             </div>
 
             <div className="space-y-3">
-              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+              <h3 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
                 Platform
-              </h5>
+              </h3>
               <ul className="space-y-2 text-xs font-body-sm text-secondary">
                 <li><Link to="/dashboard" className="hover:text-primary">Dashboard</Link></li>
                 <li><Link to="/workload" className="hover:text-primary">Team Workload</Link></li>
@@ -839,9 +842,9 @@ export default function Landing() {
             </div>
 
             <div className="space-y-3">
-              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+              <h3 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
                 Resources
-              </h5>
+              </h3>
               <ul className="space-y-2 text-xs font-body-sm text-secondary">
                 <li><a href="#features" className="hover:text-primary">Core Features</a></li>
                 <li><a href="#demo" className="hover:text-primary">Interactive Simulator</a></li>
@@ -851,9 +854,9 @@ export default function Landing() {
             </div>
 
             <div className="space-y-3">
-              <h5 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
+              <h3 className="font-label-md text-xs uppercase tracking-wider text-primary font-bold">
                 System Status
-              </h5>
+              </h3>
               <div className="flex items-center gap-2 text-xs font-label-md text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg w-fit">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>All Systems Operational</span>
