@@ -95,9 +95,9 @@ export default function InsightsPanel({ proposal, riskRow, suggestions, teamRisk
           Smart Suggestions
         </h4>
         <div className="space-y-sm">
-          {suggestions.map((item) => (
+          {suggestions.map((item, idx) => (
             <button
-              key={item.title}
+              key={`${item.title}-${item.detail || idx}`}
               type="button"
               onClick={() => setSelected(item)}
               className="w-full text-left px-sm py-sm rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors flex justify-between items-center group"
