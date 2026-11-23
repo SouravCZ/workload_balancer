@@ -18,6 +18,7 @@ import {
   UNDERUTILIZED_THRESHOLD,
 } from "../utils/scoring";
 import metricsData from "../models/metrics.json";
+import RealDataBenchmarksSection from "../components/RealDataBenchmarksSection";
 
 export default function About() {
   return (
@@ -266,6 +267,9 @@ export default function About() {
           </div>
         </div>
       </Card>
+
+      {/* Real-Data Reference Benchmarks */}
+      <RealDataBenchmarksSection />
 
       {/* Tech Stack */}
       <Card className="p-lg">

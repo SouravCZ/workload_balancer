@@ -53,18 +53,35 @@ The Equilibrium ML suite evaluates three operational dimensions on engineering t
 
 ---
 
-## 3. Real-Data Check: IBM HR Attrition Pipeline (`ml/train_real_data.py`)
-> **Real-data check: not yet run.**
-> 
-> To run the real-data check locally:
-> 1. Download the IBM HR Attrition CSV from Kaggle or an upstream archive to the expected input path:
->    `ml/data/WA_Fn-UseC_-HR-Employee-Attrition.csv`
-> 2. Execute the evaluation pipeline command:
+## 3. Real-Data Benchmarks (`ml/real/`)
+> **Real-data benchmarks: not yet run.**
+>
+> *Separate public benchmarks. They do not validate the synthetic Equilibrium models; feature schemas differ.*
+>
+> These offline empirical benchmarks evaluate whether organizational burnout and engineering resolution times can be predicted from public, empirical telemetry. They are strictly decoupled from the live in-browser scoring engine.
+>
+> ### Execution Commands
+> To evaluate these benchmarks locally:
+> 1. Download empirical datasets into `ml/data/real/` following instructions in `ml/real/README.md` and `ml/real/SOURCES.md`.
+> 2. Run the Employee Burnout benchmark (HackerEarth / Paras Varshney):
 >    ```bash
->    python ml/train_real_data.py --data-path ml/data/WA_Fn-UseC_-HR-Employee-Attrition.csv
+>    python ml/real/train_burnout_real.py
 >    ```
-> 
-> Real-world HR attrition reflects organizational departure factors rather than sprint-level workload rebalancing; it serves as a separate methodological check and does **not** validate the synthetic model.
+>    - Evaluates continuous Burn Rate regression and binary high burnout classification (Burn Rate $\ge 0.60$, justified by clinical upper-quartile acute exhaustion cutoffs).
+>    - Uses operational features only: Resource Allocation, Designation, WFH Setup, Company Type, tenure from Date of Joining.
+>    - Excludes subjective `Mental Fatigue Score` from the main model; runs an explicit ablation with it to measure the subjective fatigue lift.
+>    - Evaluates 5-fold CV tuning, Ridge / Logistic linear baselines, and HistGradientBoosting.
+> 3. Run the Jira Issue Duration benchmark (Apache Software Foundation / Ted Lozzo):
+>    ```bash
+>    python ml/real/train_duration_real.py
+>    ```
+>    - Evaluates 3-class resolution time prediction (Short, Medium, Long based on empirical duration tertiles).
+>    - Enforces a strict time-based train/test split to prevent temporal data leakage.
+>    - Evaluates Majority baseline, Logistic Regression, and HistGradientBoosting.
+> 4. Calibrate synthetic task marginals from empirical Jira telemetry:
+>    ```bash
+>    python ml/generate_data.py --calibrate-from-real
+>    ```
 
 ---
 

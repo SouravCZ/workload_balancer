@@ -40,7 +40,62 @@ def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-np.clip(x, -25.0, 25.0)))
 
 
-def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000):
+def fit_jira_marginals(jira_path: Path):
+    if not jira_path.exists():
+        alt = jira_path.parent / "issues.csv"
+        if alt.exists():
+            jira_path = alt
+        else:
+            return None
+    try:
+        df = pd.read_csv(jira_path)
+        col_map = {c.lower(): c for c in df.columns}
+        created_col = col_map.get("created") or col_map.get("created_date") or col_map.get("created_at")
+        resolved_col = col_map.get("resolved") or col_map.get("resolutiondate") or col_map.get("resolution_date")
+        priority_col = col_map.get("priority")
+
+        # Fit priority probabilities
+        p_probs = [0.20, 0.40, 0.25, 0.15]
+        if priority_col:
+            prios = df[priority_col].dropna().astype(str).str.lower()
+            def map_p(p):
+                if any(k in p for k in ["trivial", "minor", "low", "1"]):
+                    return 1
+                elif any(k in p for k in ["major", "normal", "medium", "2"]):
+                    return 2
+                elif any(k in p for k in ["critical", "high", "3"]):
+                    return 3
+                elif any(k in p for k in ["blocker", "urgent", "4"]):
+                    return 4
+                return 2
+            mapped = prios.apply(map_p)
+            counts = mapped.value_counts(normalize=True).to_dict()
+            p_probs = [counts.get(1, 0.20), counts.get(2, 0.40), counts.get(3, 0.25), counts.get(4, 0.15)]
+            total = sum(p_probs)
+            p_probs = [p / total for p in p_probs]
+
+        # Fit duration quantiles scaled to estimated_hours
+        duration_means = None
+        if created_col and resolved_col:
+            v_df = df.dropna(subset=[created_col, resolved_col]).copy()
+            v_df["dt1"] = pd.to_datetime(v_df[created_col], errors="coerce")
+            v_df["dt2"] = pd.to_datetime(v_df[resolved_col], errors="coerce")
+            v_df = v_df.dropna(subset=["dt1", "dt2"])
+            hours = (v_df["dt2"] - v_df["dt1"]).dt.total_seconds() / 3600.0
+            hours = hours[hours > 0]
+            if len(hours) >= 50:
+                q = hours.quantile([0.10, 0.30, 0.50, 0.70, 0.90]).values
+                min_h, max_h = 6.0, 48.0
+                norm_q = (q - q.min()) / max(1e-5, (q.max() - q.min()))
+                duration_means = {i + 1: float(min_h + norm_q[i] * (max_h - min_h)) for i in range(5)}
+
+        return {"priority_probs": p_probs, "duration_means": duration_means}
+    except Exception as e:
+        print(f"[CALIBRATION ERROR] Failed parsing Jira dataset: {e}")
+        return None
+
+
+def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000, calibrate_from_real: bool = False):
     rng = np.random.RandomState(seed)
 
     data_dir = Path("ml/data")
@@ -115,16 +170,34 @@ def generate_dataset(seed: int = 42, n_members: int = 300, n_tasks: int = 4000):
     # ----------------------------------------------------
     # Table B: Tasks
     # ----------------------------------------------------
+    calibrated_marginals = None
+    if calibrate_from_real:
+        jira_path = Path("ml/data/real/jira_issues.csv")
+        calibrated_marginals = fit_jira_marginals(jira_path)
+        print("=" * 60)
+        if calibrated_marginals:
+            print("[CALIBRATION ENABLED] Task marginals calibrated from real Jira data:")
+            print(f"  Priority mix (Low, Med, High, Crit): {[round(p, 3) for p in calibrated_marginals['priority_probs']]}")
+        else:
+            print("[CALIBRATION NOTICE] Real Jira data not found at ml/data/real/jira_issues.csv. Falling back to default synthetic distributions.")
+        print("Calibrated columns: task priority, estimated_hours (from Jira).")
+        print("Synthetic columns: skills, member roster, tenure, outcome labels (burnout, on_time, quality).")
+        print("=" * 60)
+
     tasks = []
     for j in range(1, n_tasks + 1):
         task_id = f"t_{j:04d}"
         complexity = rng.choice([1, 2, 3, 4, 5], p=[0.15, 0.25, 0.30, 0.20, 0.10])
 
-        # Estimated hours correlated with complexity
-        est_mean = {1: 6, 2: 12, 3: 20, 4: 32, 5: 48}[complexity]
-        estimated_hours = int(np.clip(round(rng.normal(est_mean, 4)), 2, 60))
-
-        priority = rng.choice([1, 2, 3, 4], p=[0.20, 0.40, 0.25, 0.15])  # 1: Low, 2: Medium, 3: High, 4: Critical
+        if calibrate_from_real and calibrated_marginals:
+            est_mean = calibrated_marginals["duration_means"].get(complexity, {1: 6, 2: 12, 3: 20, 4: 32, 5: 48}[complexity]) if calibrated_marginals.get("duration_means") else {1: 6, 2: 12, 3: 20, 4: 32, 5: 48}[complexity]
+            estimated_hours = int(np.clip(round(rng.normal(est_mean, 4)), 2, 60))
+            priority = rng.choice([1, 2, 3, 4], p=calibrated_marginals["priority_probs"])
+        else:
+            # Estimated hours correlated with complexity
+            est_mean = {1: 6, 2: 12, 3: 20, 4: 32, 5: 48}[complexity]
+            estimated_hours = int(np.clip(round(rng.normal(est_mean, 4)), 2, 60))
+            priority = rng.choice([1, 2, 3, 4], p=[0.20, 0.40, 0.25, 0.15])  # 1: Low, 2: Medium, 3: High, 4: Critical
         deadline_days = max(1, int(round((estimated_hours / 7.0) * rng.uniform(0.7, 2.0))))
         collaboration_needed = int(rng.choice([0, 1], p=[0.60, 0.40] if complexity <= 2 else [0.30, 0.70]))
 
@@ -382,6 +455,16 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--n_members", type=int, default=300)
     parser.add_argument("--n_tasks", type=int, default=4000)
+    parser.add_argument(
+        "--calibrate-from-real",
+        action="store_true",
+        help="Fit task marginals (priority and duration) from empirical Jira dataset if available",
+    )
     args = parser.parse_args()
 
-    generate_dataset(seed=args.seed, n_members=args.n_members, n_tasks=args.n_tasks)
+    generate_dataset(
+        seed=args.seed,
+        n_members=args.n_members,
+        n_tasks=args.n_tasks,
+        calibrate_from_real=args.calibrate_from_real,
+    )

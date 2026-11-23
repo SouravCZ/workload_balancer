@@ -6,6 +6,7 @@ import { rebalanceProposals, skillCoverage, teamMetrics } from "../utils/scoring
 import { capacityByGroup, workloadTrend } from "../services/mockData";
 import metricsData from "../models/metrics.json";
 import { predictBurnout, predictTaskFit } from "../services/mlModel";
+import RealDataBenchmarksSection from "../components/RealDataBenchmarksSection";
 
 const ranges = ["This Week", "This Month", "Q3"];
 
@@ -739,6 +740,11 @@ export default function Insights() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Real-Data Reference Benchmarks */}
+      <section className="space-y-md">
+        <RealDataBenchmarksSection />
       </section>
 
       <div className="bg-primary-container text-surface-container-low p-lg rounded-xl flex flex-col md:flex-row items-center justify-between gap-lg shadow-sm border border-primary/20">
