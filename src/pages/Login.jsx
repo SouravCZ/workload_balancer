@@ -181,10 +181,12 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    aria-label={showPassword ? "visibility off - Hide password" : "visibility - Show password"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     className="absolute right-md top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface flex items-center justify-center"
                   >
-                    <Icon name={showPassword ? "visibility_off" : "visibility"} className="text-[20px]" />
+                    <span aria-hidden="true" className="flex items-center justify-center">
+                      <Icon name={showPassword ? "visibility_off" : "visibility"} className="text-[20px]" />
+                    </span>
                   </button>
                 </div>
               </div>

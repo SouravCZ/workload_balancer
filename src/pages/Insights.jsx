@@ -551,7 +551,7 @@ export default function Insights() {
         <div className="p-md rounded-lg bg-secondary-container/30 border border-secondary/30 flex items-start gap-md">
           <Icon name="info" className="text-secondary text-[20px] shrink-0 mt-0.5" />
           <div className="text-xs text-secondary leading-relaxed font-body-sm">
-            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> Models are trained on a controlled synthetic dataset (10,000 assignments, 300 members, 4,000 tasks) with interaction labels and Gaussian noise. Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter. Real-world enterprise deployments calibrate against historical issue tracker throughput and HR leaves.
+            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> Models are trained on a controlled synthetic dataset (10,000 assignments, 300 members, 4,000 tasks) with interaction labels and Gaussian noise. Measured on the held-out test set, GBDT beats the linear baseline by 0.014 R2 on quality and 0.003 ROC-AUC on burnout; logistic regression beats GBDT by 0.003 ROC-AUC on on-time delivery. Gradient boosting is kept because it is already integrated and parity-tested, not because nonlinearity was shown to matter. Real-world enterprise deployments calibrate against historical issue tracker throughput and HR leaves.
           </div>
         </div>
 

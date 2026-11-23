@@ -120,7 +120,7 @@ Models are evaluated on a held-out test set ($N = 1,474$ assignments) partitione
 
 ## ⚠️ Synthetic Data Notice & Production Calibration
 
-All machine learning models included in this repository are trained on a controlled synthetic demonstration dataset (`ml/generate_data.py`) with calibrated interaction terms and noise. Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter. 
+All machine learning models included in this repository are trained on a controlled synthetic demonstration dataset (`ml/generate_data.py`) with calibrated interaction terms and noise. Measured on the held-out test set, GBDT beats the linear baseline by 0.014 R2 on quality and 0.003 ROC-AUC on burnout; logistic regression beats GBDT by 0.003 ROC-AUC on on-time delivery. Gradient boosting is kept because it is already integrated and parity-tested, not because nonlinearity was shown to matter. 
 
 In enterprise deployments, these pipelines are designed to be recalibrated against historical engineering telemetry:
 - **Task Outcomes**: Pull request cycle times, code review iterations, and deployment rollbacks from GitHub/GitLab.

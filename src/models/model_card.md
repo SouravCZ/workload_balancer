@@ -5,7 +5,7 @@
 > These models were trained on synthetically generated engineering telemetry (`ml/generate_data.py`).
 > **Noise Calibration Note**: The outcome noise ($\sigma = 13.5$) and unobserved friction factors were deliberately tuned so that held-out test $R^2$ landed in the calibration target range of $0.60–0.85$ for a synthetic dataset. This calibration is an explicit experimental control on synthetic data generated from mathematical formulas; it **does not** validate real-world performance or substitute for empirical validation on genuine software engineering teams.
 >
-> Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter.
+> Measured on the held-out test set, GBDT beats the linear baseline by 0.014 R2 on quality and 0.003 ROC-AUC on burnout; logistic regression beats GBDT by 0.003 ROC-AUC on on-time delivery. Gradient boosting is kept because it is already integrated and parity-tested, not because nonlinearity was shown to matter.
 
 ## 1. Overview & System Telemetry
 The Equilibrium ML suite evaluates three operational dimensions on engineering task assignments:

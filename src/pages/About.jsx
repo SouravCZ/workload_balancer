@@ -17,6 +17,7 @@ import {
   STREAK_LOAD_PCT,
   UNDERUTILIZED_THRESHOLD,
 } from "../utils/scoring";
+import metricsData from "../models/metrics.json";
 
 export default function About() {
   return (
@@ -199,7 +200,7 @@ export default function About() {
         />
         <div className="mt-md space-y-md text-body-sm text-secondary leading-relaxed">
           <div className="p-md rounded-xl bg-secondary-container/20 border border-secondary/30 text-xs">
-            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> All ML models in Equilibrium are trained on a controlled synthetic engineering dataset (<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-container">ml/generate_data.py</code>, seed 42) with interaction labels and Gaussian noise. Linear baselines (Ridge / Logistic Regression) perform within about 0.01 R2 / 0.005 ROC-AUC of the gradient-boosted models on this synthetic data; the GBDT is kept for its slightly higher scores, not because nonlinearity was shown to matter. In production deployments, pipelines retrain on enterprise issue trackers (Jira/Linear/GitHub) and HR time-off systems.
+            <strong className="text-primary font-bold">Synthetic Demonstration Data Notice:</strong> All ML models in Equilibrium are trained on a controlled synthetic engineering dataset (<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-container">ml/generate_data.py</code>, seed 42) with interaction labels and Gaussian noise. Measured on the held-out test set, GBDT beats the linear baseline by 0.014 R2 on quality and 0.003 ROC-AUC on burnout; logistic regression beats GBDT by 0.003 ROC-AUC on on-time delivery. Gradient boosting is kept because it is already integrated and parity-tested, not because nonlinearity was shown to matter. In production deployments, pipelines retrain on enterprise issue trackers (Jira/Linear/GitHub) and HR time-off systems.
           </div>
 
           <p>
@@ -215,7 +216,7 @@ export default function About() {
                 Predicts task outcome quality on a 0–100 continuous scale. Captures that high skill proficiency cannot compensate for acute workload saturation (&gt;110% utilization).
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test R² = 0.798 (Ridge Linear Baseline R² = 0.784)
+                Test R² = {metricsData.outcome_quality["GradientBoosting (Candidate)"].R2.toFixed(3)} (Ridge Linear Baseline R² = {metricsData.outcome_quality["Linear (Ridge)"].R2.toFixed(3)})
               </div>
             </div>
 
@@ -227,7 +228,7 @@ export default function About() {
                 Estimates probability of delivering by the deadline based on task complexity, priority, collaboration dependencies, and schedule headroom.
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test ROC-AUC = 0.845 (Logistic Regression ROC-AUC = 0.848)
+                Test ROC-AUC = {metricsData.on_time["GradientBoosting (Candidate)"]["ROC-AUC"].toFixed(3)} (Logistic Regression ROC-AUC = {metricsData.on_time["Logistic Regression"]["ROC-AUC"].toFixed(3)})
               </div>
             </div>
 
@@ -239,7 +240,7 @@ export default function About() {
                 Detects probability of burnout manifestation within 4 weeks using sustained multi-week streaks, PTO gaps, overtime velocity, and concurrent critical load.
               </p>
               <div className="pt-xs text-[11px] font-mono text-primary font-bold">
-                Test ROC-AUC = 0.898 · Calibrated Threshold = 0.33 (Recall = 66.5%)
+                Test ROC-AUC = {metricsData.burnout_risk["GradientBoosting (Candidate)"]["ROC-AUC"].toFixed(3)} · Calibrated Threshold = {metricsData.burnout_risk["GradientBoosting (Candidate)"].Threshold.toFixed(2)} (Recall = {(metricsData.burnout_risk["GradientBoosting (Candidate)"].Recall * 100).toFixed(1)}%)
               </div>
             </div>
           </div>

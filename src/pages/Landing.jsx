@@ -313,7 +313,7 @@ export default function Landing() {
       )}
 
       {/* Modern High-Conversion Hero Section */}
-      <main tabIndex={0} aria-label="Landing Page Main Content">
+      <main aria-label="Landing Page Main Content">
       <section className="bg-white border-b border-[#ebecf0] pt-12 pb-20 md:pt-16 md:pb-24">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column: Bold Headline & Context */}
