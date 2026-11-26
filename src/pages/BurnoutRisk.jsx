@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTeamContext } from "../context/TeamContext";
 import { Avatar, Card, Chip, Icon, KpiCard, riskTone } from "../components/ui";
 import Modal, { Button, ModalActions } from "../components/Modal";
@@ -13,6 +14,7 @@ const gaugeColor = {
 
 export default function BurnoutRisk() {
   const { members, tasks } = useTeamContext();
+  const navigate = useNavigate();
   const [showReport, setShowReport] = useState(false);
   const [selectedId, setSelectedId] = useState(
     members.find((m) => calculateRiskScore(m).tier === "High")?.id ?? members[0]?.id ?? null,
@@ -190,7 +192,15 @@ export default function BurnoutRisk() {
                   return (
                     <tr
                       key={row.member.id}
+                      tabIndex={0}
+                      aria-label={`Select ${row.member.name}`}
                       onClick={() => setSelectedId(row.member.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedId(row.member.id);
+                        }
+                      }}
                       className={`cursor-pointer transition-colors ${
                         isActive
                           ? "bg-error-container/10"
@@ -402,7 +412,19 @@ export default function BurnoutRisk() {
           <h3 className="font-headline-sm text-headline-sm text-primary">AI Recommended Actions</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-md relative z-10">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex flex-col justify-between hover:bg-surface-container-highest transition-colors cursor-pointer group">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/workload")}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                navigate("/workload");
+              }
+            }}
+            aria-label="Open workload view to reassign tasks"
+            className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex flex-col justify-between hover:bg-surface-container-highest transition-colors cursor-pointer group"
+          >
             <div>
               <h4 className="font-body-md font-medium text-on-surface mb-xs">Reassign Tasks</h4>
               <p className="font-body-sm text-body-sm text-secondary">
@@ -419,7 +441,19 @@ export default function BurnoutRisk() {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex flex-col justify-between hover:bg-surface-container-highest transition-colors cursor-pointer group">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/insights")}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                navigate("/insights");
+              }
+            }}
+            aria-label="Open insights to plan recovery"
+            className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex flex-col justify-between hover:bg-surface-container-highest transition-colors cursor-pointer group"
+          >
             <div>
               <h4 className="font-body-md font-medium text-on-surface mb-xs">Schedule Recovery</h4>
               <p className="font-body-sm text-body-sm text-secondary">

@@ -21,9 +21,13 @@ from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import (
+    accuracy_score,
     average_precision_score,
+    f1_score,
     mean_absolute_error,
+    precision_score,
     r2_score,
+    recall_score,
     roc_auc_score,
 )
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
@@ -182,6 +186,11 @@ def run_pipeline(data_path: Path):
     dummy_clf_prob = dummy_clf.predict_proba(X_test_proc)[:, 1]
     dummy_auc = float(roc_auc_score(y_clf_test, dummy_clf_prob))
     dummy_prauc = float(average_precision_score(y_clf_test, dummy_clf_prob))
+    dummy_clf_pred = (dummy_clf_prob >= 0.5).astype(int)
+    dummy_acc = float(accuracy_score(y_clf_test, dummy_clf_pred))
+    dummy_precision = float(precision_score(y_clf_test, dummy_clf_pred, zero_division=0))
+    dummy_recall = float(recall_score(y_clf_test, dummy_clf_pred, zero_division=0))
+    dummy_f1 = float(f1_score(y_clf_test, dummy_clf_pred, zero_division=0))
 
     # Baseline: Logistic Regression
     logit_clf = LogisticRegression(class_weight="balanced", max_iter=1000, random_state=42)
@@ -189,6 +198,11 @@ def run_pipeline(data_path: Path):
     logit_prob = logit_clf.predict_proba(X_test_proc)[:, 1]
     logit_auc = float(roc_auc_score(y_clf_test, logit_prob))
     logit_prauc = float(average_precision_score(y_clf_test, logit_prob))
+    logit_pred = (logit_prob >= 0.5).astype(int)
+    logit_acc = float(accuracy_score(y_clf_test, logit_pred))
+    logit_precision = float(precision_score(y_clf_test, logit_pred, zero_division=0))
+    logit_recall = float(recall_score(y_clf_test, logit_pred, zero_division=0))
+    logit_f1 = float(f1_score(y_clf_test, logit_pred, zero_division=0))
 
     # Tuned HistGradientBoostingClassifier (5-fold CV on train only, n_iter>=20)
     gbdt_clf_base = HistGradientBoostingClassifier(random_state=42)
@@ -213,6 +227,11 @@ def run_pipeline(data_path: Path):
     gbdt_prob = best_gbdt_clf.predict_proba(X_test_proc)[:, 1]
     gbdt_auc = float(roc_auc_score(y_clf_test, gbdt_prob))
     gbdt_prauc = float(average_precision_score(y_clf_test, gbdt_prob))
+    gbdt_clf_pred = (gbdt_prob >= 0.5).astype(int)
+    gbdt_acc = float(accuracy_score(y_clf_test, gbdt_clf_pred))
+    gbdt_precision = float(precision_score(y_clf_test, gbdt_clf_pred, zero_division=0))
+    gbdt_recall = float(recall_score(y_clf_test, gbdt_clf_pred, zero_division=0))
+    gbdt_f1 = float(f1_score(y_clf_test, gbdt_clf_pred, zero_division=0))
 
     # Permutation Importance on test set
     perm_res = permutation_importance(best_gbdt_reg, X_test_proc, y_reg_test, n_repeats=10, random_state=42)
@@ -232,9 +251,9 @@ def run_pipeline(data_path: Path):
     print(f"    - Ridge Linear Baseline:  R2 = {ridge_r2:.4f}, MAE = {ridge_mae:.4f}")
     print(f"    - HistGradientBoosting:   R2 = {gbdt_r2:.4f}, MAE = {gbdt_mae:.4f} (Gap vs Ridge: {reg_gap:+.4f})")
     print(f"  Classification (High Burnout >= 0.60):")
-    print(f"    - Majority Baseline:      ROC-AUC = {dummy_auc:.4f}, PR-AUC = {dummy_prauc:.4f}")
-    print(f"    - Logistic Regression:    ROC-AUC = {logit_auc:.4f}, PR-AUC = {logit_prauc:.4f}")
-    print(f"    - HistGradientBoosting:   ROC-AUC = {gbdt_auc:.4f}, PR-AUC = {gbdt_prauc:.4f} (Gap vs Logistic: {clf_gap:+.4f})")
+    print(f"    - Majority Baseline:      ROC-AUC = {dummy_auc:.4f}, PR-AUC = {dummy_prauc:.4f}, Acc = {dummy_acc:.4f}")
+    print(f"    - Logistic Regression:    ROC-AUC = {logit_auc:.4f}, PR-AUC = {logit_prauc:.4f}, Acc = {logit_acc:.4f}")
+    print(f"    - HistGradientBoosting:   ROC-AUC = {gbdt_auc:.4f}, PR-AUC = {gbdt_prauc:.4f}, Acc = {gbdt_acc:.4f}, Precision = {gbdt_precision:.4f}, Recall = {gbdt_recall:.4f}, F1 = {gbdt_f1:.4f} (Gap vs Logistic: {clf_gap:+.4f})")
     if linear_matches_gbdt:
         print("  [FINDING] The linear baseline performs within ~0.02 of gradient boosting on empirical operational features.")
     else:
@@ -273,12 +292,15 @@ def run_pipeline(data_path: Path):
     gbdt_ab_prob = gbdt_ab_clf.predict_proba(X_test_ab_proc)[:, 1]
     gbdt_ab_auc = float(roc_auc_score(y_clf_test_ab, gbdt_ab_prob))
     gbdt_ab_prauc = float(average_precision_score(y_clf_test_ab, gbdt_ab_prob))
+    gbdt_ab_pred = (gbdt_ab_prob >= 0.5).astype(int)
+    gbdt_ab_acc = float(accuracy_score(y_clf_test_ab, gbdt_ab_pred))
+    gbdt_ab_f1 = float(f1_score(y_clf_test_ab, gbdt_ab_pred, zero_division=0))
 
     fatigue_gap_r2 = gbdt_ab_r2 - gbdt_r2
     fatigue_gap_auc = gbdt_ab_auc - gbdt_auc
     print(f"Ablation Results (Mental Fatigue Added):")
     print(f"  - Regression R2: {gbdt_ab_r2:.4f} vs {gbdt_r2:.4f} (Subjective Fatigue Lift: {fatigue_gap_r2:+.4f} R2)")
-    print(f"  - Classification ROC-AUC: {gbdt_ab_auc:.4f} vs {gbdt_auc:.4f} (Lift: {fatigue_gap_auc:+.4f})")
+    print(f"  - Classification ROC-AUC: {gbdt_ab_auc:.4f} vs {gbdt_auc:.4f} (Lift: {fatigue_gap_auc:+.4f}), Acc = {gbdt_ab_acc:.4f}, F1 = {gbdt_ab_f1:.4f}")
     print("  [FINDING] Including subjective mental fatigue adds substantial explanatory power, but Equilibrium intentionally restricts inputs to non-intrusive operational telemetry.")
 
     # Save metrics to JSON
@@ -305,9 +327,29 @@ def run_pipeline(data_path: Path):
                 "gap_gbdt_vs_linear_r2": reg_gap,
             },
             "classification": {
-                "Dummy (Majority)": {"ROC-AUC": dummy_auc, "PR-AUC": dummy_prauc},
-                "Logistic Regression": {"ROC-AUC": logit_auc, "PR-AUC": logit_prauc},
-                "HistGradientBoosting": {"ROC-AUC": gbdt_auc, "PR-AUC": gbdt_prauc, "best_params": search_clf.best_params_},
+                "Dummy (Majority)": {
+                    "ROC-AUC": dummy_auc,
+                    "PR-AUC": dummy_prauc,
+                    "Accuracy": dummy_acc,
+                    "F1": dummy_f1,
+                },
+                "Logistic Regression": {
+                    "ROC-AUC": logit_auc,
+                    "PR-AUC": logit_prauc,
+                    "Accuracy": logit_acc,
+                    "Precision": logit_precision,
+                    "Recall": logit_recall,
+                    "F1": logit_f1,
+                },
+                "HistGradientBoosting": {
+                    "ROC-AUC": gbdt_auc,
+                    "PR-AUC": gbdt_prauc,
+                    "Accuracy": gbdt_acc,
+                    "Precision": gbdt_precision,
+                    "Recall": gbdt_recall,
+                    "F1": gbdt_f1,
+                    "best_params": search_clf.best_params_,
+                },
                 "gap_gbdt_vs_logistic_auc": clf_gap,
             },
             "permutation_importance": importances,
@@ -318,6 +360,8 @@ def run_pipeline(data_path: Path):
             "regression_mae": gbdt_ab_mae,
             "classification_roc_auc": gbdt_ab_auc,
             "classification_pr_auc": gbdt_ab_prauc,
+            "classification_accuracy": gbdt_ab_acc,
+            "classification_f1": gbdt_ab_f1,
             "r2_lift_over_operational_only": fatigue_gap_r2,
             "auc_lift_over_operational_only": fatigue_gap_auc,
         },
@@ -334,6 +378,8 @@ def run_pipeline(data_path: Path):
         except Exception:
             current_data = {}
 
+    current_data["status"] = "completed"
+    current_data["description"] = "Real-data benchmarks evaluated locally"
     current_data["burnout_real"] = output_metrics
     with open(metrics_file, "w") as f:
         json.dump(current_data, f, indent=2)

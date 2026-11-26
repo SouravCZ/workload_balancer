@@ -241,7 +241,15 @@ export default function TeamMembers() {
                     return (
                       <tr
                         key={member.id}
+                        tabIndex={0}
+                        aria-label={`Select ${member.name}`}
                         onClick={() => setSelectedId(member.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedId(member.id);
+                          }
+                        }}
                         className={`cursor-pointer transition-colors ${
                           isActive
                             ? "bg-primary-container/5"

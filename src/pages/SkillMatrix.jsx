@@ -162,7 +162,15 @@ export default function SkillMatrix() {
                 {members.map((member) => (
                   <tr
                     key={member.id}
+                    tabIndex={0}
+                    aria-label={`Select ${member.name}`}
                     onClick={() => setSelectedId(member.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedId(member.id);
+                      }
+                    }}
                     className={`cursor-pointer border-b border-outline-variant/50 transition-colors ${
                       selected?.id === member.id ? "bg-surface-container/40" : "hover:bg-surface-container-low"
                     }`}
@@ -335,7 +343,14 @@ export default function SkillMatrix() {
             </h4>
             <div className="space-y-md">
               {largestGap ? (
-                <div className="flex items-center justify-between p-md border border-outline-variant rounded hover:border-primary-container transition-colors cursor-pointer group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = members.find((m) => proficiencyOf(m, largestGap.skill) < 3);
+                    if (target) setSelectedId(target.id);
+                  }}
+                  className="w-full flex items-center justify-between p-md border border-outline-variant rounded hover:border-primary-container transition-colors cursor-pointer group"
+                >
                   <span className="text-sm text-on-background font-medium">
                     Upskill {members.filter((m) => proficiencyOf(m, largestGap.skill) < 3)[0]?.name.split(" ")[0] ?? "the team"}{" "}
                     in {largestGap.skill}
@@ -344,10 +359,17 @@ export default function SkillMatrix() {
                     name="arrow_forward"
                     className="text-on-surface-variant group-hover:text-primary-container transition-colors"
                   />
-                </div>
+                </button>
               ) : null}
               {topSkill ? (
-                <div className="flex items-center justify-between p-md border border-outline-variant rounded hover:border-primary-container transition-colors cursor-pointer group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = topSkill.holders[0]?.member;
+                    if (target) setSelectedId(target.id);
+                  }}
+                  className="w-full flex items-center justify-between p-md border border-outline-variant rounded hover:border-primary-container transition-colors cursor-pointer group"
+                >
                   <span className="text-sm text-on-background font-medium">
                     Reduce dependency on {topSkill.holders[0]?.member.name.split(" ")[0]} for{" "}
                     {topSkill.skill}
@@ -356,7 +378,7 @@ export default function SkillMatrix() {
                     name="arrow_forward"
                     className="text-on-surface-variant group-hover:text-primary-container transition-colors"
                   />
-                </div>
+                </button>
               ) : null}
             </div>
           </Card>

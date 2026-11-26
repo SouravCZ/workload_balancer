@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server";
 import RealDataBenchmarksSection from "./RealDataBenchmarksSection";
 
 describe("RealDataBenchmarksSection UI Rendering", () => {
-  it("renders 'not yet run' state when metrics are missing or marked not_run", () => {
+  it("renders 'not yet run' state when no benchmark results are present", () => {
     const htmlEmpty = renderToString(<RealDataBenchmarksSection metrics={{ status: "not_run" }} />);
     expect(htmlEmpty).toContain("Real-Data Reference Benchmarks");
     expect(htmlEmpty).toContain("Real-data benchmarks: not yet run");
@@ -26,28 +26,43 @@ describe("RealDataBenchmarksSection UI Rendering", () => {
           name: "Are Your Employees Burning Out? (HackerEarth)",
           source: "https://www.kaggle.com/datasets/parasvarshney/employee-burnout-dataset",
           total_rows: 22750,
-          test_rows: 3718,
+          test_rows: 4326,
           high_burnout_threshold: 0.6,
-          test_positive_rate: 0.245,
+          test_positive_rate: 0.238,
         },
         operational_model_main: {
           regression: {
-            "Dummy (Mean)": { R2: -0.001, MAE: 0.165 },
-            "Linear (Ridge)": { R2: 0.542, MAE: 0.108 },
-            HistGradientBoosting: { R2: 0.551, MAE: 0.105 },
-            gap_gbdt_vs_linear_r2: 0.009,
+            "Dummy (Mean)": { R2: -0.0001, MAE: 0.159 },
+            "Linear (Ridge)": { R2: 0.713, MAE: 0.085 },
+            HistGradientBoosting: { R2: 0.743, MAE: 0.081 },
+            gap_gbdt_vs_linear_r2: 0.03,
           },
           classification: {
-            "Dummy (Majority)": { "ROC-AUC": 0.5, "PR-AUC": 0.245 },
-            "Logistic Regression": { "ROC-AUC": 0.865, "PR-AUC": 0.695 },
-            HistGradientBoosting: { "ROC-AUC": 0.871, "PR-AUC": 0.702 },
-            gap_gbdt_vs_logistic_auc: 0.006,
+            "Dummy (Majority)": { "ROC-AUC": 0.5, "PR-AUC": 0.238, Accuracy: 0.7617, F1: 0 },
+            "Logistic Regression": {
+              "ROC-AUC": 0.913,
+              "PR-AUC": 0.786,
+              Accuracy: 0.825,
+              Precision: 0.598,
+              Recall: 0.808,
+              F1: 0.688,
+            },
+            HistGradientBoosting: {
+              "ROC-AUC": 0.92,
+              "PR-AUC": 0.8,
+              Accuracy: 0.8669,
+              Precision: 0.7636,
+              Recall: 0.6392,
+              F1: 0.6959,
+            },
+            gap_gbdt_vs_logistic_auc: 0.0066,
           },
         },
         ablation_with_mental_fatigue: {
-          regression_r2: 0.895,
-          r2_lift_over_operational_only: 0.344,
-          classification_roc_auc: 0.978,
+          regression_r2: 0.91,
+          r2_lift_over_operational_only: 0.167,
+          classification_roc_auc: 0.969,
+          classification_accuracy: 0.9103,
         },
       },
       jira_duration_real: {
@@ -78,6 +93,8 @@ describe("RealDataBenchmarksSection UI Rendering", () => {
     expect(htmlPopulated).toContain("Dataset A: Employee Burnout Benchmark");
     expect(htmlPopulated).toContain("Dataset B: Jira Resolution Duration Classification");
     expect(htmlPopulated).toContain("HistGradientBoosting");
+    expect(htmlPopulated).toMatch(/Acc = (<!-- -->)?86\.7(<!-- -->)?%/);
+    expect(htmlPopulated).toMatch(/Precision = (<!-- -->)?0\.764/);
     expect(htmlPopulated).toContain("Subjective Mental Fatigue Score Ablation");
   });
 });

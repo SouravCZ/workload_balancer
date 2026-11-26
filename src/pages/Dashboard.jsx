@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTeamContext } from "../context/TeamContext";
 import { Avatar, Card, Chip, Icon, KpiCard, SectionHeading, UtilizationBar, riskTone } from "../components/ui";
 import InsightsPanel from "../components/InsightsPanel";
 import Modal, { Button, ModalActions } from "../components/Modal";
 import { rebalanceProposals, teamMetrics, calculateFitScore, calculateBurnoutRisk } from "../utils/scoring";
+import { predictMemberBurnoutML } from "../services/mlModel";
 
 const filters = ["All Roles", "Frontend", "Backend", "Data", "Platform"];
 
@@ -22,6 +23,23 @@ export default function Dashboard() {
 
   const metrics = useMemo(() => teamMetrics(members, tasks), [members, tasks]);
   const proposals = useMemo(() => rebalanceProposals(members, tasks), [members, tasks]);
+
+  const [mlRiskMap, setMlRiskMap] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMlRisks() {
+      const next = {};
+      for (const member of members) {
+        next[member.id] = await predictMemberBurnoutML(member, tasks);
+      }
+      if (isMounted) setMlRiskMap(next);
+    }
+    loadMlRisks();
+    return () => {
+      isMounted = false;
+    };
+  }, [members, tasks]);
 
   const visibleRows = useMemo(
     () => metrics.rows.filter((row) => matchesFilter(row.member, roleFilter)),
@@ -201,33 +219,80 @@ export default function Dashboard() {
         </div>
 
         <Card className="p-lg mb-xl">
-          <div className="flex items-center justify-between mb-lg">
-            <h3 className="font-headline-sm text-headline-sm text-primary">Team Workload</h3>
+          <div className="flex items-start justify-between gap-md mb-md">
+            <div>
+              <h3 className="font-headline-sm text-headline-sm text-primary">Team Workload</h3>
+              <p className="font-body-sm text-body-sm text-secondary mt-0.5">
+                Rule and ML risk shown side by side for a quick check.
+              </p>
+            </div>
             <Chip tone="outline">
               {visibleRows.length} of {metrics.totalMembers} shown
             </Chip>
           </div>
-          <div className="space-y-lg">
-            {visibleRows.map(({ member, utilization, status, risk }) => (
-              <div key={member.id}>
-                <div className="flex justify-between items-center font-label-md text-label-md mb-sm">
-                  <span className="flex items-center gap-sm text-on-surface">
-                    <Avatar member={member} size="xs" />
-                    <span className="font-medium">{member.name}</span>
-                    <span className="text-[11px] text-secondary font-normal">{member.shortRole}</span>
-                    <Chip tone={riskTone(risk.tier)}>{risk.tier}</Chip>
-                  </span>
-                  <span className={status === "overloaded" ? "text-error" : "text-secondary"}>
-                    {Math.round(utilization * 100)}%
-                  </span>
-                </div>
-                <UtilizationBar utilization={utilization} />
-              </div>
-            ))}
-            {visibleRows.length === 0 ? (
-              <p className="font-body-sm text-body-sm text-secondary">No members match this filter.</p>
-            ) : null}
+          <div tabIndex={0} role="region" aria-label="Team workload table" className="overflow-x-auto custom-scrollbar outline-none">
+            <table className="w-full text-left border-collapse min-w-[620px]">
+              <thead>
+                <tr className="bg-surface-container-low border-b border-outline-variant">
+                  <th className="px-md py-sm font-label-md text-label-md text-secondary font-medium">Member</th>
+                  <th className="px-md py-sm font-label-md text-label-md text-secondary font-medium">Rule risk</th>
+                  <th className="px-md py-sm font-label-md text-label-md text-secondary font-medium">ML risk</th>
+                  <th className="px-md py-sm font-label-md text-label-md text-secondary font-medium">Load</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant">
+                {visibleRows.map(({ member, utilization, status, risk }) => {
+                  const mlTier = mlRiskMap[member.id]?.riskTier;
+                  return (
+                    <tr key={member.id} className="transition-colors hover:bg-surface-container-lowest">
+                      <td className="px-md py-md">
+                        <div className="flex items-center gap-md">
+                          <Avatar member={member} size="sm" />
+                          <div>
+                            <p className="font-label-md text-label-md font-semibold text-on-surface">
+                              {member.name}
+                            </p>
+                            <p className="font-body-sm text-body-sm text-secondary">{member.shortRole}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-md py-md">
+                        <Chip tone={riskTone(risk.tier)} className="text-[11px] px-2 py-0.5">
+                          {risk.tier}
+                        </Chip>
+                      </td>
+                      <td className="px-md py-md">
+                        {mlTier ? (
+                          <Chip tone={riskTone(mlTier)} className="text-[11px] px-2 py-0.5">
+                            {mlTier}
+                          </Chip>
+                        ) : (
+                          <span className="font-body-sm text-body-sm text-secondary">Checking…</span>
+                        )}
+                      </td>
+                      <td className="px-md py-md">
+                        <div className="flex items-center gap-sm">
+                          <span
+                            className={`font-label-md text-label-md w-10 ${
+                              status === "overloaded" ? "text-error" : "text-on-surface"
+                            }`}
+                          >
+                            {Math.round(utilization * 100)}%
+                          </span>
+                          <div className="w-24">
+                            <UtilizationBar utilization={utilization} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+          {visibleRows.length === 0 ? (
+            <p className="font-body-sm text-body-sm text-secondary py-md">No members match this filter.</p>
+          ) : null}
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg mb-xl">

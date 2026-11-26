@@ -6,14 +6,16 @@ export default function Login() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [forgotNotice, setForgotNotice] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const submit = (event) => {
     event.preventDefault();
-    navigate("/dashboard");
+    navigate("/dashboard", { state: { rememberMe } });
   };
 
   const signInWithProvider = (provider) => {
-    navigate("/dashboard", { state: { signedInWith: provider } });
+    navigate("/dashboard", { state: { signedInWith: provider, rememberMe } });
   };
 
   return (
@@ -191,22 +193,32 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-1">
-                <label className="flex items-center gap-sm cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-outline-variant text-primary-container focus:ring-primary-container focus:ring-offset-0 bg-surface-container-lowest"
-                  />
-                  <span className="font-body-sm text-body-sm text-secondary group-hover:text-on-surface transition-colors">
-                    Remember me
-                  </span>
-                </label>
-                <a
-                  href="#"
-                  className="font-label-md text-label-md text-[13px] text-primary-container hover:text-primary transition-colors"
-                >
-                  Forgot password?
-                </a>
+              <div className="mt-1">
+                <div className="flex justify-between items-center">
+                  <label className="flex items-center gap-sm cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(event) => setRememberMe(event.target.checked)}
+                      className="w-4 h-4 rounded border-outline-variant text-primary-container focus:ring-primary-container focus:ring-offset-0 bg-surface-container-lowest"
+                    />
+                    <span className="font-body-sm text-body-sm text-secondary group-hover:text-on-surface transition-colors">
+                      Remember me
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setForgotNotice(true)}
+                    className="font-label-md text-label-md text-[13px] text-primary-container hover:text-primary transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                {forgotNotice ? (
+                  <p className="font-body-sm text-body-sm text-secondary mt-xs" role="status">
+                    Password reset isn&apos;t available in this demo. Use &ldquo;Continue as Demo&rdquo; to explore the workspace.
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-sm mt-1">

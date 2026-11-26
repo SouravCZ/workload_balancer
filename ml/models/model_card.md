@@ -54,12 +54,22 @@ The Equilibrium ML suite evaluates three operational dimensions on engineering t
 ---
 
 ## 3. Real-Data Benchmarks (`ml/real/`)
-> **Real-data benchmarks: not yet run.**
+> **Employee Burnout benchmark: completed.** The Jira Resolution Duration benchmark has not been run in this environment.
 >
 > *Separate public benchmarks. They do not validate the synthetic Equilibrium models; feature schemas differ.*
 >
 > These offline empirical benchmarks evaluate whether organizational burnout and engineering resolution times can be predicted from public, empirical telemetry. They are strictly decoupled from the live in-browser scoring engine.
->
+
+### Employee Burnout Results (HackerEarth / Paras Varshney)
+Dataset: 22,750 rows; 21,626 labeled after dropping missing `Burn Rate`; 17,300 train / 4,326 stratified test rows (seed 42). High burnout = `Burn Rate ≥ 0.60` (23.83% test prevalence).
+
+| Target | Mean / Majority Baseline | Linear Baseline | HistGradientBoosting (tuned) |
+| :--- | :--- | :--- | :--- |
+| Burn Rate (regression) | R² = -0.000, MAE = 0.159 | Ridge R² = 0.713, MAE = 0.085 | **R² = 0.743, MAE = 0.081** |
+| High burnout (classification) | ROC-AUC = 0.500, PR-AUC = 0.238, Acc = 76.2% | Logistic ROC-AUC = 0.913, PR-AUC = 0.786, Acc = 82.5% | **ROC-AUC = 0.920, PR-AUC = 0.800, Acc = 86.7%, Precision = 0.764, Recall = 0.639, F1 = 0.696** |
+
+Ablation adding subjective `Mental Fatigue Score`: regression R² = 0.910 (+0.167), classification ROC-AUC = 0.969 (+0.049), Acc = 91.0%, F1 = 0.803. The live engine still excludes this intrusive input. Machine-readable results: `ml/models/real_metrics.json` (mirrored to `src/models/real_metrics.json`).
+
 > ### Execution Commands
 > To evaluate these benchmarks locally:
 > 1. Download empirical datasets into `ml/data/real/` following instructions in `ml/real/README.md` and `ml/real/SOURCES.md`.

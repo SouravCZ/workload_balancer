@@ -1,4 +1,100 @@
 {
-  "status": "not_run",
-  "description": "Real-data benchmarks: not yet run"
+  "status": "completed",
+  "description": "Real-data benchmarks evaluated locally",
+  "burnout_real": {
+    "status": "completed",
+    "dataset": {
+      "name": "Are Your Employees Burning Out? (HackerEarth)",
+      "source": "https://www.kaggle.com/datasets/parasvarshney/employee-burnout-dataset",
+      "total_rows": 22750,
+      "train_rows": 17300,
+      "test_rows": 4326,
+      "high_burnout_threshold": 0.6,
+      "threshold_justification": "A continuous Burn Rate threshold of 0.60 corresponds to the upper quartile (~top 25%) of burnout severity in the HackerEarth benchmark, aligning with Maslach Burnout Inventory (MBI) clinical cutoffs for acute emotional exhaustion requiring operational workload relief.",
+      "train_positive_rate": 0.23832369942196532,
+      "test_positive_rate": 0.23832639852057327
+    },
+    "operational_model_main": {
+      "features": [
+        "Resource Allocation",
+        "Designation",
+        "tenure_days",
+        "WFH Setup Available",
+        "Company Type"
+      ],
+      "mental_fatigue_excluded": true,
+      "regression": {
+        "Dummy (Mean)": {
+          "R2": -7.15951886918198e-05,
+          "MAE": 0.15947142189049146
+        },
+        "Linear (Ridge)": {
+          "R2": 0.7134868990917961,
+          "MAE": 0.08515132219352013
+        },
+        "HistGradientBoosting": {
+          "R2": 0.7434137172397451,
+          "MAE": 0.08059382593474433,
+          "best_params": {
+            "min_samples_leaf": 10,
+            "max_iter": 200,
+            "max_depth": 5,
+            "learning_rate": 0.03,
+            "l2_regularization": 0.0
+          }
+        },
+        "gap_gbdt_vs_linear_r2": 0.029926818147949064
+      },
+      "classification": {
+        "Dummy (Majority)": {
+          "ROC-AUC": 0.5,
+          "PR-AUC": 0.23832639852057327,
+          "Accuracy": 0.7616736014794268,
+          "F1": 0.0
+        },
+        "Logistic Regression": {
+          "ROC-AUC": 0.9131940202729056,
+          "PR-AUC": 0.786288537485606,
+          "Accuracy": 0.8250115580212668,
+          "Precision": 0.5984195402298851,
+          "Recall": 0.8079534432589719,
+          "F1": 0.6875773834089971
+        },
+        "HistGradientBoosting": {
+          "ROC-AUC": 0.9198415139771778,
+          "PR-AUC": 0.8002844819576749,
+          "Accuracy": 0.8668515950069348,
+          "Precision": 0.7636152954808807,
+          "Recall": 0.6391852570320078,
+          "F1": 0.6958817317845829,
+          "best_params": {
+            "min_samples_leaf": 50,
+            "max_iter": 50,
+            "max_depth": 4,
+            "learning_rate": 0.15,
+            "l2_regularization": 1.0
+          }
+        },
+        "gap_gbdt_vs_logistic_auc": 0.0066474937042722
+      },
+      "permutation_importance": {
+        "Resource Allocation": 1.4282493525740907,
+        "Designation": 0.15412244640998324,
+        "tenure_days": 0.000748448507793964,
+        "WFH Setup Available (Yes)": 0.018657859181510382,
+        "Company Type (Service)": -0.00011054704260551329
+      },
+      "linear_matches_gbdt": true
+    },
+    "ablation_with_mental_fatigue": {
+      "regression_r2": 0.909972692519541,
+      "regression_mae": 0.04710130773128813,
+      "classification_roc_auc": 0.9692057595422037,
+      "classification_pr_auc": 0.9178282323692829,
+      "classification_accuracy": 0.9103097549699491,
+      "classification_f1": 0.8032454361054767,
+      "r2_lift_over_operational_only": 0.1665589752797959,
+      "auc_lift_over_operational_only": 0.04936424556502583
+    }
+  }
 }

@@ -2,10 +2,7 @@ import defaultMetrics from "../models/real_metrics.json";
 import { Card, CardHeader, Icon } from "./ui";
 
 export default function RealDataBenchmarksSection({ metrics = defaultMetrics }) {
-  const isNotRun =
-    !metrics ||
-    metrics.status === "not_run" ||
-    (!metrics.burnout_real && !metrics.jira_duration_real);
+  const isNotRun = !metrics?.burnout_real && !metrics?.jira_duration_real;
 
   const burnout = metrics?.burnout_real;
   const jira = metrics?.jira_duration_real;
@@ -117,19 +114,22 @@ export default function RealDataBenchmarksSection({ metrics = defaultMetrics }) 
                   <div className="pt-xs font-mono text-xs space-y-1">
                     <div className="text-secondary flex justify-between">
                       <span>Majority Baseline:</span>
-                      <span>AUC = {burnout.operational_model_main.classification["Dummy (Majority)"]["ROC-AUC"].toFixed(3)}</span>
+                      <span>AUC = {burnout.operational_model_main.classification["Dummy (Majority)"]["ROC-AUC"].toFixed(3)} · Acc = {(burnout.operational_model_main.classification["Dummy (Majority)"].Accuracy * 100).toFixed(1)}%</span>
                     </div>
                     <div className="text-secondary flex justify-between">
                       <span>Logistic Regression:</span>
-                      <span>AUC = {burnout.operational_model_main.classification["Logistic Regression"]["ROC-AUC"].toFixed(3)}</span>
+                      <span>AUC = {burnout.operational_model_main.classification["Logistic Regression"]["ROC-AUC"].toFixed(3)} · Acc = {(burnout.operational_model_main.classification["Logistic Regression"].Accuracy * 100).toFixed(1)}%</span>
                     </div>
                     <div className="text-primary font-bold flex justify-between">
                       <span>HistGradientBoosting:</span>
-                      <span>AUC = {burnout.operational_model_main.classification.HistGradientBoosting["ROC-AUC"].toFixed(3)}</span>
+                      <span>AUC = {burnout.operational_model_main.classification.HistGradientBoosting["ROC-AUC"].toFixed(3)} · Acc = {(burnout.operational_model_main.classification.HistGradientBoosting.Accuracy * 100).toFixed(1)}%</span>
                     </div>
                   </div>
                   <div className="pt-xs text-[10px] text-secondary italic">
                     Gap vs Logistic: {burnout.operational_model_main.classification.gap_gbdt_vs_logistic_auc >= 0 ? "+" : ""}{burnout.operational_model_main.classification.gap_gbdt_vs_logistic_auc.toFixed(3)} AUC
+                  </div>
+                  <div className="pt-xs text-[10px] text-secondary font-mono">
+                    Precision = {burnout.operational_model_main.classification.HistGradientBoosting.Precision.toFixed(3)} · Recall = {burnout.operational_model_main.classification.HistGradientBoosting.Recall.toFixed(3)} · F1 = {burnout.operational_model_main.classification.HistGradientBoosting.F1.toFixed(3)}
                   </div>
                 </div>
               </div>
@@ -144,8 +144,9 @@ export default function RealDataBenchmarksSection({ metrics = defaultMetrics }) 
                     Adding self-reported mental fatigue yields R² ={" "}
                     {burnout.ablation_with_mental_fatigue.regression_r2.toFixed(3)} (+
                     {burnout.ablation_with_mental_fatigue.r2_lift_over_operational_only.toFixed(3)} lift) and ROC-AUC ={" "}
-                    {burnout.ablation_with_mental_fatigue.classification_roc_auc.toFixed(3)}.
-                    Equilibrium intentionally restricts live features to objective operational telemetry to protect team privacy.
+                     {burnout.ablation_with_mental_fatigue.classification_roc_auc.toFixed(3)} (Acc ={" "}
+                     {(burnout.ablation_with_mental_fatigue.classification_accuracy * 100).toFixed(1)}%).
+                     Equilibrium intentionally restricts live features to objective operational telemetry to protect team privacy.
                   </p>
                 </div>
               )}

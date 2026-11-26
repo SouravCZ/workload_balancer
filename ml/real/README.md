@@ -75,3 +75,26 @@ python ml/generate_data.py --calibrate-from-real
 - When `ml/data/real/jira_issues.csv` is present, calibrates task priority distribution and duration quantiles mapped to `estimated_hours`.
 - Member proficiencies and outcome formulas remain synthetic.
 - If called without `--calibrate-from-real`, the generator produces byte-identical synthetic telemetry.
+
+---
+
+## 3. Results (Employee Burnout Benchmark)
+
+The two provided dataset parts were combined into `ml/data/real/employee_burnout.csv` (22,750 rows; 21,626 labeled after dropping missing `Burn Rate`; 17,300 train / 4,326 stratified test rows, seed 42). High burnout = `Burn Rate ≥ 0.60` (23.83% test prevalence).
+
+| Target | Mean / Majority Baseline | Linear Baseline | HistGradientBoosting (tuned) |
+| :--- | :--- | :--- | :--- |
+| Burn Rate (regression) | R² = -0.000, MAE = 0.159 | Ridge R² = 0.713, MAE = 0.085 | **R² = 0.743, MAE = 0.081** |
+| High burnout (classification) | ROC-AUC = 0.500, PR-AUC = 0.238, Acc = 76.2% | Logistic ROC-AUC = 0.913, PR-AUC = 0.786, Acc = 82.5% | **ROC-AUC = 0.920, PR-AUC = 0.800, Acc = 86.7%, Precision = 0.764, Recall = 0.639, F1 = 0.696** |
+
+Adding subjective `Mental Fatigue Score` raises regression to R² = 0.910 (+0.167) and classification to ROC-AUC = 0.969 (+0.049), Acc = 91.0%, F1 = 0.803. The live scoring engine deliberately excludes that intrusive input.
+
+Full machine-readable results are written to `ml/models/real_metrics.json` and mirrored to `src/models/real_metrics.json`, which feeds the in-app benchmarks section. On Windows, set `JOBLIB_MULTIPROCESSING=0` before running the script if joblib multiprocessing is unavailable.
+
+### Scoring an Unlabeled Test Set
+```bash
+python ml/real/predict_burnout_real.py --test-path path/to/test.csv
+```
+- Refits the tuned operational regressor/classifier on all 21,626 labeled rows using the hyperparameters in `ml/models/real_metrics.json`.
+- Writes `ml/data/real/burnout_test_predictions.csv` (Burn Rate, high-burnout probability, binary flag) and `ml/data/real/burnout_test_submission.csv` (`Employee ID,Burn Rate`, matching the challenge submission format).
+- An unlabeled test file has no `Burn Rate` column, so accuracy cannot be computed; only predictions can be produced.

@@ -3,7 +3,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8.3.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Tests](https://img.shields.io/badge/Tests-33%20passed-brightgreen?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/Tests-37%20passed-brightgreen?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![ML In-Browser](https://img.shields.io/badge/ML%20In--Browser-Gradient%20Boosting%20(median%200.010ms)-blueviolet)](ml/models/model_card.md)
 
 **Equilibrium** is a modern engineering operations portal designed to distribute software development tasks fairly, transparently, and sustainably. In typical teams, 20% of senior engineers often absorb 70% of organizational friction—leading to silent burnout, sudden turnover, and delayed critical-path features.
@@ -74,7 +74,7 @@ npm install
 # Start development server
 npm run dev
 
-# Run full Vitest unit & parity test suite (33 tests)
+# Run full Vitest unit & parity test suite (37 tests)
 npm run test
 
 # Run Oxlint static analysis
@@ -115,6 +115,19 @@ Models are evaluated on a held-out test set ($N = 1,474$ assignments) partitione
 | **Outcome Quality** (0–100) | Heuristic Spearman $\rho = 0.700$ (scale mismatch, $R^2$ not meaningful) | Ridge $R^2 = 0.784$, MAE = 10.46 | **$R^2 = 0.798$, MAE = 10.13** | Tuned model leads Ridge by $+0.014$ $R^2$ pts |
 | **On-Time Delivery** (0/1) | Heuristic ROC-AUC = 0.802 (Spearman $\rho = 0.515$) | Logistic ROC-AUC = 0.848, Acc = 78.2% | **ROC-AUC = 0.845, F1 = 81.5%, Acc = 77.7%** | Logistic regression marginally exceeds Gradient Boosting ($-0.003$ AUC) |
 | **Burnout Risk** (0/1) | Heuristic ROC-AUC = 0.763 (Spearman $\rho = 0.378$) | Logistic ROC-AUC = 0.895, PR-AUC = 0.736 | **ROC-AUC = 0.898, PR-AUC = 0.726, F1 = 66.1%** | Calibrated threshold = 0.330 (Recall = 66.5%, Precision = 65.6%) |
+
+---
+
+## 🌐 Real-Data Reference Benchmark (Offline)
+
+The public HackerEarth Employee Burnout dataset has been evaluated locally (22,750 rows; 17,300 train / 4,326 held-out test rows). This is a **separate offline benchmark** and does not validate the synthetic in-browser models above.
+
+| Target | Linear Baseline | HistGradientBoosting (tuned) |
+| :--- | :--- | :--- |
+| Burn Rate (regression) | Ridge R² = 0.713, MAE = 0.085 | **R² = 0.743, MAE = 0.081** |
+| High burnout ≥ 0.60 (classification) | Logistic ROC-AUC = 0.913, Acc = 82.5% | **ROC-AUC = 0.920, Acc = 86.7%, F1 = 0.696** |
+
+Adding subjective `Mental Fatigue Score` lifts regression to R² = 0.910 and classification to ROC-AUC = 0.969 (Acc = 91.0%); the live engine intentionally excludes it. Reproduce with `python ml/real/train_burnout_real.py` (on Windows, set `JOBLIB_MULTIPROCESSING=0` first). Full results: `ml/models/real_metrics.json`.
 
 ---
 

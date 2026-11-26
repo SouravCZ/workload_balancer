@@ -122,9 +122,9 @@ export default function Tasks() {
     return owner && calculateBurnoutRisk(owner).riskTier !== "Low";
   }).length;
 
-  const autoAssign = (memberId) => {
-    if (!selected) return;
-    assignTask(selected.id, memberId);
+  const autoAssign = (memberId, taskId = selected?.id) => {
+    if (!taskId) return;
+    assignTask(taskId, memberId);
   };
 
   const submitTask = (event) => {
@@ -298,7 +298,15 @@ export default function Tasks() {
               return (
                 <div
                   key={task.id}
+                  tabIndex={0}
+                  aria-label={`Select ${task.title}`}
                   onClick={() => setSelectedId(task.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedId(task.id);
+                    }
+                  }}
                   className={`w-full grid grid-cols-12 gap-md px-md py-md items-center border-b border-outline-variant text-left transition-colors cursor-pointer ${
                     isSelected ? "bg-surface-container/40" : "hover:bg-surface-container-low"
                   }`}
@@ -335,12 +343,18 @@ export default function Tasks() {
                           tabIndex={0}
                           onClick={(event) => {
                             event.stopPropagation();
-                            if (bestCandidate) autoAssign(bestCandidate.member.id);
+                            const candidate = rankCandidates(task, members).find(
+                              (entry) => entry.member.id !== task.assignedMemberId,
+                            );
+                            if (candidate) autoAssign(candidate.member.id, task.id);
                           }}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
                               event.stopPropagation();
-                              if (bestCandidate) autoAssign(bestCandidate.member.id);
+                              const candidate = rankCandidates(task, members).find(
+                                (entry) => entry.member.id !== task.assignedMemberId,
+                              );
+                              if (candidate) autoAssign(candidate.member.id, task.id);
                             }
                           }}
                           className="text-body-sm text-primary font-medium cursor-pointer hover:underline"

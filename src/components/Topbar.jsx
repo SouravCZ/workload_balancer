@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "./ui";
 import Modal, { Button, ModalActions } from "./Modal";
 import { useTeamContext } from "../context/TeamContext";
@@ -22,8 +23,41 @@ export default function Topbar({
   actions,
 }) {
   const { members, tasks } = useTeamContext();
+  const navigate = useNavigate();
   const [dialog, setDialog] = useState(null);
+  const [localQuery, setLocalQuery] = useState("");
   const closeDialog = () => setDialog(null);
+  const query = searchValue || localQuery;
+  const setQuery = (value) => {
+    setLocalQuery(value);
+    onSearch?.(value);
+  };
+
+  const searchResults = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return [];
+    const results = [];
+    members.forEach((member) => {
+      const matches =
+        member.name?.toLowerCase().includes(normalized) ||
+        member.role?.toLowerCase().includes(normalized) ||
+        member.skills?.some((entry) => entry.skill?.toLowerCase().includes(normalized));
+      if (matches) {
+        results.push({
+          id: `member-${member.id}`,
+          label: member.name,
+          detail: member.role,
+          path: "/team-members",
+        });
+      }
+    });
+    tasks.forEach((task) => {
+      if (task.title?.toLowerCase().includes(normalized)) {
+        results.push({ id: `task-${task.id}`, label: task.title, detail: "Task", path: "/tasks" });
+      }
+    });
+    return results.slice(0, 6);
+  }, [query, members, tasks]);
 
   const notifications = useMemo(() => {
     const items = [];
@@ -111,12 +145,37 @@ export default function Topbar({
           />
           <input
             type="search"
-            value={searchValue}
-            onChange={(event) => onSearch?.(event.target.value)}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setQuery("");
+            }}
             placeholder={placeholder}
             aria-label={placeholder}
             className="w-full pl-xl pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-full text-body-sm text-on-background placeholder:text-on-surface-variant focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors"
           />
+          {query ? (
+            <div className="absolute left-0 right-0 top-full mt-xs z-30 overflow-hidden rounded-lg border border-outline-variant bg-surface soft-shadow">
+              {searchResults.length ? (
+                searchResults.map((result) => (
+                  <button
+                    key={result.id}
+                    type="button"
+                    onClick={() => {
+                      navigate(result.path);
+                      setQuery("");
+                    }}
+                    className="w-full flex items-center justify-between gap-sm px-md py-sm text-left hover:bg-surface-container transition-colors"
+                  >
+                    <span className="font-body-sm text-body-sm text-on-surface truncate">{result.label}</span>
+                    <span className="font-label-md text-label-md text-secondary shrink-0">{result.detail}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-md py-sm font-body-sm text-body-sm text-secondary">No matches found</p>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 

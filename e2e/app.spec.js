@@ -267,3 +267,61 @@ test.describe('Modal Focus Trap and Keyboard Dismissal', () => {
     await expect(modal).not.toBeVisible();
   });
 });
+
+test.describe('Interactive Controls', () => {
+  test('topbar search navigates to a matching member', async ({ page }) => {
+    await page.goto('/dashboard', { waitUntil: 'networkidle' });
+    const search = page.getByRole('searchbox', { name: /Search team members/ });
+    await search.fill('Sarah');
+
+    const result = page.locator('header').getByRole('button', { name: /Sarah Jenkins/ });
+    await expect(result).toBeVisible();
+    await result.click();
+    await expect(page).toHaveURL(/\/team-members/);
+  });
+
+  test('skill matrix recommendation selects the suggested member', async ({ page }) => {
+    await page.goto('/skill-matrix', { waitUntil: 'networkidle' });
+    const recommendation = page.getByRole('button', { name: /Reduce dependency on/ });
+    await expect(recommendation).toBeVisible();
+    const firstName = (await recommendation.innerText()).match(/Reduce dependency on ([A-Za-z]+)/)?.[1];
+    expect(firstName).toBeTruthy();
+
+    await recommendation.click();
+    await expect(page.getByRole('heading', { name: new RegExp(`^${firstName}`) })).toBeVisible();
+  });
+
+  test('burnout recommendation cards navigate to their workspaces', async ({ page }) => {
+    await page.goto('/burnout-risk', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /Open workload view to reassign tasks/ }).click();
+    await expect(page).toHaveURL(/\/workload/);
+
+    await page.goto('/burnout-risk', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /Open insights to plan recovery/ }).click();
+    await expect(page).toHaveURL(/\/insights/);
+  });
+
+  test('login notice and remember-me toggle respond to clicks', async ({ page }) => {
+    await page.goto('/login', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Forgot password?' }).click();
+    await expect(page.getByRole('status')).toContainText("Password reset isn't available in this demo");
+
+    const remember = page.getByRole('checkbox');
+    await remember.check();
+    await expect(remember).toBeChecked();
+  });
+
+  test('task row Assign acts on that row, not the selected task', async ({ page }) => {
+    await page.goto('/tasks', { waitUntil: 'networkidle' });
+    const row = page
+      .locator('[aria-label^="Select "]')
+      .filter({ has: page.getByText('Assign', { exact: true }) })
+      .first();
+    const label = await row.getAttribute('aria-label');
+    expect(label).toBeTruthy();
+
+    await row.getByText('Assign', { exact: true }).click();
+    const sameRow = page.locator(`[aria-label="${label}"]`);
+    await expect(sameRow).not.toContainText('Assign');
+  });
+});
